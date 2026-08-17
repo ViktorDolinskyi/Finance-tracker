@@ -12,13 +12,13 @@
 <link rel="manifest" href='data:application/manifest+json,{"name":"Фінанси","short_name":"Фінанси","start_url":".","display":"standalone","background_color":"%230F1210","theme_color":"%230F1210"}'>
 <script>(function(){try{var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-accent',localStorage.getItem('accent')||'green');var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',t==='dark'?'#0F1210':'#F4F3EE');}catch(e){}})();</script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800&display=swap');
   :root{
     --bg:#F4F3EE;--surface:#FFFFFF;--surface2:#F4F2EB;--ink:#1A1C19;--muted:#6E7268;--line:#E7E4DA;--line-soft:#F0EEE7;
     --accent:#1E7A5E;--accent-soft:#E2F0E9;--income:#1E8A66;--expense:#C5523F;--transfer:#4A6FA5;--danger:#B23B2E;
     --shadow:0 1px 2px rgba(26,28,25,.04),0 10px 28px -16px rgba(26,28,25,.16);
     --lift:0 2px 6px rgba(26,28,25,.06),0 18px 40px -16px rgba(26,28,25,.26);
-    --display:'Bricolage Grotesque',system-ui,sans-serif;--body:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;--mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
+    --display:'Unbounded',system-ui,sans-serif;--body:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;--mono:ui-monospace,'SF Mono',Menlo,monospace;
   }
   :root[data-theme="dark"]{--bg:#0F1210;--surface:#181C19;--surface2:#202522;--ink:#E9ECE6;--muted:#969C91;--line:#2A302B;--line-soft:#232825;--accent:#3DB78C;--accent-soft:#16302A;--income:#41BC8C;--expense:#E0705C;--transfer:#6E97C9;--danger:#E06A5C;--shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -16px rgba(0,0,0,.6);--lift:0 2px 6px rgba(0,0,0,.5),0 20px 44px -16px rgba(0,0,0,.7)}
   *{box-sizing:border-box;margin:0;padding:0}
