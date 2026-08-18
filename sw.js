@@ -1,5 +1,5 @@
-const CACHE='fin-shell-v2';
-const SHELL=['./','./index.html','./favicon.svg','./manifest.json','./finance-utils.js'];
+const CACHE='fin-shell-v3';
+const SHELL=['./','./index.html','./favicon.svg','./manifest.json','./finance-utils.js','./apple-touch-icon.png'];
 
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()));
