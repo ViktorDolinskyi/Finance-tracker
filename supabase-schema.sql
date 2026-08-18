@@ -113,3 +113,27 @@ begin
     execute format('create policy "own rows delete" on %I for delete using (user_id = auth.uid())', t);
   end loop;
 end $$;
+
+-- Індекси: user_id фільтрується RLS-політикою в кожному запиті до кожної таблиці,
+-- без індексу це full scan, що деградує лінійно з ростом історії операцій.
+create index if not exists accounts_user_id_idx on accounts(user_id);
+create index if not exists categories_user_id_idx on categories(user_id);
+create index if not exists tags_user_id_idx on tags(user_id);
+-- settings.user_id уже unique -> індекс створюється автоматично, окремий не потрібен.
+
+create index if not exists transactions_user_id_idx on transactions(user_id);
+create index if not exists transactions_account_id_idx on transactions(account_id);
+create index if not exists transactions_to_account_id_idx on transactions(to_account_id);
+create index if not exists transactions_category_id_idx on transactions(category_id);
+create index if not exists transactions_occurred_at_idx on transactions(occurred_at desc);
+
+create index if not exists planned_user_id_idx on planned(user_id);
+create index if not exists planned_account_id_idx on planned(account_id);
+create index if not exists planned_to_account_id_idx on planned(to_account_id);
+create index if not exists planned_category_id_idx on planned(category_id);
+create index if not exists planned_next_date_idx on planned(next_date);
+
+create index if not exists templates_user_id_idx on templates(user_id);
+create index if not exists templates_account_id_idx on templates(account_id);
+create index if not exists templates_to_account_id_idx on templates(to_account_id);
+create index if not exists templates_category_id_idx on templates(category_id);
