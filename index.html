@@ -352,7 +352,7 @@ async function init(){
   user?afterLogin():renderAuth();
 }
 async function afterLogin(){
-  try{const c=JSON.parse(localStorage.getItem('cache')||'null');if(c){D=c;renderApp();}}catch{}
+  try{const c=JSON.parse(localStorage.getItem('cache')||'null');if(c)D=c;}catch{}
   await loadData();
   try{if(localStorage.getItem('ratesDate')!==todayDate())refreshRates(true);}catch(e){}
 }
