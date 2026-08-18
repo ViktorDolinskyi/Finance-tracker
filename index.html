@@ -444,10 +444,6 @@ async function postPlan(p){
   syncCache();
   renderApp();
 }
-async function addAccount(o){await sb.from('accounts').insert({name:o.name,icon:o.icon||'💳',initial:o.initial||0,type:o.type||'regular',currency:o.currency||'UAH',credit_limit:o.credit_limit||0,sort:D.accounts.length});await loadData();}
-async function delAccount(id){if(!confirm('Видалити рахунок? Його операції лишаться без рахунку.'))return;await sb.from('accounts').delete().eq('id',id);D.accounts=D.accounts.filter(a=>a.id!==id);syncCache();renderApp();}
-async function addCategory(kind,name,icon){const color=PALETTE[D.categories.length%PALETTE.length];await sb.from('categories').insert({kind,name,icon:icon||'•',color,sort:D.categories.length});await loadData();}
-async function delCategory(id){if(!confirm('Видалити категорію?'))return;await sb.from('categories').delete().eq('id',id);D.categories=D.categories.filter(c=>c.id!==id);syncCache();renderApp();}
 async function setBudget(id,v){const b=num(v)||0;const{data,error}=await sb.from('categories').update({budget:b}).eq('id',id).select().single();if(error){toast(error.message,true);return;}const i=D.categories.findIndex(c=>c.id===id);if(i>-1)D.categories[i]=data;syncCache();renderApp();}
 async function addTag(name){const color=PALETTE[D.tags.length%PALETTE.length];const{data,error}=await sb.from('tags').insert({name,color,sort:D.tags.length}).select().single();if(error){toast(error.message,true);return;}D.tags.push(data);syncCache();renderApp();}
 async function delTag(id){if(!confirm('Видалити мітку?'))return;await sb.from('tags').delete().eq('id',id);D.tags=D.tags.filter(t=>t.id!==id);syncCache();renderApp();}
