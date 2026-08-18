@@ -218,6 +218,7 @@
   .swatch.on:after{content:"✓";position:absolute;inset:0;display:grid;place-content:center;color:#fff;font-size:15px;font-weight:700}
   .icogrid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;max-height:158px;overflow-y:auto;margin-top:7px;padding:2px 6px 2px 2px}
   .icobtn{aspect-ratio:1;border:1px solid var(--line);background:var(--surface);border-radius:11px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .icobtn svg{width:1.1em;height:1.1em;color:var(--ink)}
   .icobtn.on{border-color:var(--accent);background:var(--accent-soft)}
   .badge{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 9px;white-space:nowrap;flex:none}
   .ratelink{color:var(--accent);font-weight:600;cursor:pointer}
@@ -272,9 +273,9 @@ const DEF_INCOME=[
   {name:'Інше',icon:'•',lucide:'Tag',color:'#8A8F9E'},
 ];
 const DEF_ACCOUNTS=[
-  {name:'Готівка',icon:'💵',initial:0,type:'regular',currency:'UAH'},
-  {name:'MONO',icon:'💳',initial:0,type:'regular',currency:'UAH'},
-  {name:'PUMB',icon:'💳',initial:0,type:'credit',currency:'UAH',credit_limit:0},
+  {name:'Готівка',icon:'💵',lucide:'Wallet',initial:0,type:'regular',currency:'UAH'},
+  {name:'MONO',icon:'💳',lucide:'CreditCard',initial:0,type:'regular',currency:'UAH'},
+  {name:'PUMB',icon:'💳',lucide:'CreditCard',initial:0,type:'credit',currency:'UAH',credit_limit:0},
 ];
 const PALETTE=['#F2683C','#3C82E5','#1FA37A','#E5489B','#6D5BD0','#E0A100','#0EA5A0','#D8443C','#8B5A2B','#5B8DEF'];
 const ATYPES=[['cash','Готівковий'],['card','Картковий'],['savings','Заощадження'],['credit','Кредитна картка'],['debt','Борг/Позика']];
@@ -311,8 +312,18 @@ function applyTheme(t){document.documentElement.setAttribute('data-theme',t);try
 const curAccent=()=>document.documentElement.getAttribute('data-accent')||'green';
 function applyAccent(a){document.documentElement.setAttribute('data-accent',a);try{localStorage.setItem('accent',a);}catch(e){}}
 const ACCENTS=[['blue','Синя','#2563C9'],['orange','Оранжева','#D9722B'],['green','Зелена','#1E7A5E'],['cyan','Блакитна','#0E8FB0']];
-const ICONS=['💳','💵','💰','🏦','🪙','💼','🛒','🍽️','☕','🍺','🍷','🚗','⛽','🚌','🚆','✈️','🏠','🔑','💡','🔌','📱','🌐','💻','👕','👟','🧥','💊','🩺','🦷','🏋️','⚽','🚴','🎮','🎬','🎵','🎁','🎉','📚','✏️','✂️','💈','🐶','🐱','🌱','👶','👪','👩','👨','❤️','🍎','🍞','🧾','🧴','🚬','🌍','🎨','🔧','📦','⭐','🎯','🏥','🎓','🍕','🛏️'];
-const iconGrid=(sel,id)=>`<div class="icogrid" id="${id}">${ICONS.map(i=>`<button type="button" class="icobtn ${i===sel?'on':''}" data-ico="${esc(i)}">${i}</button>`).join('')}</div>`;
+const LUCIDE_ICONS=['ShoppingCart','ShoppingBag','UtensilsCrossed','Coffee','Wine','Beer','Pizza','Apple','Fish','IceCreamCone',
+  'Shirt','Watch','Sparkles',
+  'Car','Fuel','Bus','Train','Bike','Plane','Truck',
+  'Home','Lightbulb','Droplet','Bath','Sofa','Wifi',
+  'Smartphone','Laptop','Tv','Gamepad2','Camera','Music','Film',
+  'BookOpen','GraduationCap','Palette','Drama',
+  'HeartPulse','Stethoscope','Pill',
+  'Dumbbell','TreePine','PawPrint',
+  'Gift','PartyPopper','HeartHandshake','Users','User','UserRound','Baby',
+  'Briefcase','Wallet','CreditCard','Banknote','Coins','PiggyBank','Receipt','TrendingUp','TrendingDown','Percent','Calculator','Landmark','Building','DollarSign','Euro',
+  'KeyRound','ShieldCheck','Umbrella','Cigarette','Tag','Star','Heart','Zap','Package'];
+const lucideGrid=(sel,id)=>`<div class="icogrid" id="${id}">${LUCIDE_ICONS.map(n=>`<button type="button" class="icobtn ${n===sel?'on':''}" data-luc="${n}" aria-label="${n}"><span data-icon="${n}" data-emoji="•"></span></button>`).join('')}</div>`;
 const agroup=t=>t==='regular'?'card':(t||'card');
 function paintIcons(scope){(scope||document).querySelectorAll('[data-icon]').forEach(el=>{
   if(el.dataset.done)return;el.dataset.done='1';
@@ -347,7 +358,7 @@ const netWorthAt=endISO=>D.accounts.filter(a=>a.in_networth!==false&&!a.archived
 const fmtDate=ds=>{const d=new Date(ds+'T00:00:00');return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;};
 const holdings=cur=>D.accounts.filter(a=>a.currency===cur).reduce((s,a)=>s+balanceOf(a.id),0);
 function tile(c,cls){const col=c&&c.color?c.color:'#8A8F9E';const lu=c&&c.lucide;const em=c?c.icon:'•';return lu?`<span class="ic ${cls||''}" data-icon="${lu}" data-emoji="${esc(em)}" style="--c:${col}"></span>`:`<span class="ic ${cls||''}" style="--c:${col}">${esc(em||'•')}</span>`;}
-function accTile(a,cls){return `<span class="ic acc ${cls||''}">${esc(a&&a.icon||'💳')}</span>`;}
+function accTile(a,cls){return a&&a.lucide?`<span class="ic acc ${cls||''}" data-icon="${a.lucide}" data-emoji="${esc(a.icon||'💳')}"></span>`:`<span class="ic acc ${cls||''}">${esc(a&&a.icon||'💳')}</span>`;}
 
 initSW();
 function initSW(){
@@ -401,7 +412,7 @@ async function loadData(){
   renderApp();
 }
 async function seed(){
-  const accRows=DEF_ACCOUNTS.map((a,i)=>({name:a.name,icon:a.icon,initial:a.initial,type:a.type,currency:a.currency,credit_limit:a.credit_limit||0,sort:i}));
+  const accRows=DEF_ACCOUNTS.map((a,i)=>({name:a.name,icon:a.icon,lucide:a.lucide||null,initial:a.initial,type:a.type,currency:a.currency,credit_limit:a.credit_limit||0,sort:i}));
   const catRows=[...DEF_EXPENSE.map((c,i)=>({kind:'expense',name:c.name,icon:c.icon,lucide:c.lucide,color:c.color,sort:i})),
                  ...DEF_INCOME.map((c,i)=>({kind:'income',name:c.name,icon:c.icon,lucide:c.lucide,color:c.color,sort:i}))];
   await sb.from('accounts').insert(accRows);
@@ -794,7 +805,7 @@ function renderCatSheet(){
     <div class="mb"><label class="fld">Назва</label><input id="ccName" value="${esc(s.name)}" placeholder="Назва категорії"></div>
     <label class="fld">Іконка</label>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px">${tile({icon:s.icon,lucide:s.lucide,color:s.color})}<span style="font-size:12px;color:var(--muted)">Обери іконку нижче</span></div>
-    ${iconGrid(s.icon,'ccIcons')}
+    ${lucideGrid(s.lucide,'ccIcons')}
     ${s.kind==='expense'?`<div class="swrow" style="margin-top:16px"><div class="lbl">Бюджет на місяць</div><label class="switch"><input type="checkbox" id="ccBudOn" ${s.budgetOn?'checked':''}><span class="sl"></span></label></div>
     ${s.budgetOn?`<div class="mb" style="margin-top:8px"><input id="ccBud" class="money-in" type="text" inputmode="decimal" placeholder="Сума бюджету, ₴" value="${esc(groupDigits(s.budget))}"></div>`:''}`:''}
     <button class="btn block" id="ccSave" style="margin-top:14px">${s.id?'Зберегти':'Додати категорію'}</button>
@@ -803,7 +814,7 @@ function renderCatSheet(){
   document.body.insertAdjacentHTML('beforeend',html);
   const ov=document.getElementById('cov');ov.onclick=e=>{if(e.target===ov)attemptCloseCat();};
   document.getElementById('ccClose').onclick=attemptCloseCat;
-  ov.querySelectorAll('#ccIcons .icobtn').forEach(b=>b.onclick=()=>{catSheet.icon=b.dataset.ico;catSheet.lucide=null;const pv=ov.querySelector('.ic');if(pv){pv.textContent=b.dataset.ico;pv.removeAttribute('data-icon');}ov.querySelectorAll('#ccIcons .icobtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');});
+  ov.querySelectorAll('#ccIcons .icobtn').forEach(b=>b.onclick=()=>{snapshotCat();catSheet.icon='•';catSheet.lucide=b.dataset.luc;renderCatSheet();});
   const bo=document.getElementById('ccBudOn');if(bo)bo.onchange=()=>{snapshotCat();catSheet.budgetOn=bo.checked;renderCatSheet();};
   document.getElementById('ccSave').onclick=()=>{snapshotCat();saveCategory();};
   const dl=document.getElementById('ccDel');if(dl)dl.onclick=async()=>{const id=s.id;if(confirm('Видалити категорію?')){closeCatSheet();const{error}=await sb.from('categories').delete().eq('id',id);if(error){toast(error.message,true);return;}D.categories=D.categories.filter(c=>c.id!==id);syncCache();renderApp();}};
@@ -867,8 +878,8 @@ async function adjustBalance(id){
   toast('Баланс скориговано');
 }
 function openAccount(a){
-  if(a)acctSheet={id:a.id,name:a.name,icon:a.icon||'💳',type:a.type==='regular'?'card':a.type,currency:a.currency,initial:String(a.initial??0),credit_limit:String(a.credit_limit??0),due_date:a.due_date||'',interest_rate:a.interest_rate!=null?String(a.interest_rate):'',stmt_day:a.stmt_day!=null?String(a.stmt_day):'',due_day:a.due_day!=null?String(a.due_day):'',min_payment:a.min_payment!=null?String(a.min_payment):'',in_networth:a.in_networth!==false,archived:!!a.archived};
-  else acctSheet={id:null,name:'',icon:'💳',type:'card',currency:'UAH',initial:'0',credit_limit:'0',due_date:'',interest_rate:'',stmt_day:'',due_day:'',min_payment:'',in_networth:true,archived:false};
+  if(a)acctSheet={id:a.id,name:a.name,icon:a.icon||'💳',lucide:a.lucide||null,type:a.type==='regular'?'card':a.type,currency:a.currency,initial:String(a.initial??0),credit_limit:String(a.credit_limit??0),due_date:a.due_date||'',interest_rate:a.interest_rate!=null?String(a.interest_rate):'',stmt_day:a.stmt_day!=null?String(a.stmt_day):'',due_day:a.due_day!=null?String(a.due_day):'',min_payment:a.min_payment!=null?String(a.min_payment):'',in_networth:a.in_networth!==false,archived:!!a.archived};
+  else acctSheet={id:null,name:'',icon:'💳',lucide:null,type:'card',currency:'UAH',initial:'0',credit_limit:'0',due_date:'',interest_rate:'',stmt_day:'',due_day:'',min_payment:'',in_networth:true,archived:false};
   acctInit=JSON.stringify(acctSheet);renderAcctSheet();
 }
 function closeAcctSheet(){acctSheet=null;acctInit=null;const o=document.getElementById('aov');if(o)o.remove();}
@@ -878,8 +889,8 @@ function renderAcctSheet(){
   const s=acctSheet;
   const html=`<div class="overlay" id="aov"><div class="sheet"><div class="sheet-grip"></div>
     <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="acClose" style="width:44px;height:44px" aria-label="Закрити"><span data-icon="X"></span></button></div>
-    <div class="two mb"><div style="flex:0 0 70px"><label class="fld">Іконка</label><button type="button" id="acIconBtn" class="icobtn" style="width:52px;height:52px;font-size:26px" aria-label="Обрати іконку">${esc(s.icon)}</button></div><div><label class="fld">Назва</label><input id="acName" value="${esc(s.name)}" placeholder="Напр. Олеся / MONO"></div></div>
-    <div id="acIconsWrap" style="display:none">${iconGrid(s.icon,'acIcons')}</div>
+    <div class="two mb"><div style="flex:0 0 70px"><label class="fld">Іконка</label><button type="button" id="acIconBtn" class="icobtn" style="width:52px;height:52px;font-size:26px" aria-label="Обрати іконку">${s.lucide?`<span data-icon="${s.lucide}" data-emoji="•"></span>`:esc(s.icon)}</button></div><div><label class="fld">Назва</label><input id="acName" value="${esc(s.name)}" placeholder="Напр. Олеся / MONO"></div></div>
+    <div id="acIconsWrap" style="display:none">${lucideGrid(s.lucide,'acIcons')}</div>
     <div class="two mb"><div><label class="fld">Тип</label><select id="acType">${ATYPES.map(t=>`<option value="${t[0]}" ${t[0]===s.type?'selected':''}>${t[1]}</option>`).join('')}</select></div><div><label class="fld">Валюта</label><select id="acCur">${CURS.map(c=>`<option value="${c}" ${c===s.currency?'selected':''}>${c}</option>`).join('')}</select></div></div>
     ${s.id?`<div class="sumcell mb"><div class="t">${s.type==='debt'?'Поточний баланс (＋ винні мені / − я винен)':'Поточний баланс'}</div><div class="v">${fmt(balanceOf(s.id),s.currency)}</div></div>
     <button type="button" class="btn line block" id="acAdjust" style="margin-bottom:14px">Скоригувати баланс</button>
@@ -898,7 +909,7 @@ function renderAcctSheet(){
   const ov=document.getElementById('aov');ov.onclick=e=>{if(e.target===ov)attemptCloseAcct();};document.getElementById('acClose').onclick=attemptCloseAcct;
   document.getElementById('acType').onchange=e=>{snapshotAcct();acctSheet.type=e.target.value;renderAcctSheet();};
   document.getElementById('acIconBtn').onclick=()=>{const w=document.getElementById('acIconsWrap');w.style.display=w.style.display==='none'?'':'none';};
-  ov.querySelectorAll('#acIcons .icobtn').forEach(b=>b.onclick=()=>{acctSheet.icon=b.dataset.ico;const btn=document.getElementById('acIconBtn');if(btn)btn.textContent=b.dataset.ico;ov.querySelectorAll('#acIcons .icobtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');document.getElementById('acIconsWrap').style.display='none';});
+  ov.querySelectorAll('#acIcons .icobtn').forEach(b=>b.onclick=()=>{snapshotAcct();acctSheet.icon='•';acctSheet.lucide=b.dataset.luc;renderAcctSheet();});
   document.getElementById('acCur').onchange=e=>{acctSheet.currency=e.target.value;};
   const adj=document.getElementById('acAdjust');if(adj)adj.onclick=()=>adjustBalance(acctSheet.id);
   document.getElementById('acSave').onclick=()=>{snapshotAcct();saveAccount();};
@@ -908,7 +919,7 @@ function renderAcctSheet(){
 }
 async function saveAccount(){
   const s=acctSheet;if(!s.name.trim())return;
-  const row={name:s.name.trim(),icon:(s.icon||'💳').trim()||'💳',type:s.type,currency:s.currency,initial:num(s.initial)||0,credit_limit:num(s.credit_limit)||0,due_date:s.type==='debt'&&s.due_date?s.due_date:null,interest_rate:(s.type==='debt'||s.type==='credit')&&num(s.interest_rate)?num(s.interest_rate):null,stmt_day:s.type==='credit'&&parseInt(s.stmt_day)?Math.min(31,Math.max(1,parseInt(s.stmt_day))):null,due_day:s.type==='credit'&&parseInt(s.due_day)?Math.min(31,Math.max(1,parseInt(s.due_day))):null,min_payment:s.type==='credit'&&num(s.min_payment)?num(s.min_payment):null,in_networth:!!s.in_networth,archived:!!s.archived};
+  const row={name:s.name.trim(),icon:(s.icon||'💳').trim()||'💳',lucide:s.lucide||null,type:s.type,currency:s.currency,initial:num(s.initial)||0,credit_limit:num(s.credit_limit)||0,due_date:s.type==='debt'&&s.due_date?s.due_date:null,interest_rate:(s.type==='debt'||s.type==='credit')&&num(s.interest_rate)?num(s.interest_rate):null,stmt_day:s.type==='credit'&&parseInt(s.stmt_day)?Math.min(31,Math.max(1,parseInt(s.stmt_day))):null,due_day:s.type==='credit'&&parseInt(s.due_day)?Math.min(31,Math.max(1,parseInt(s.due_day))):null,min_payment:s.type==='credit'&&num(s.min_payment)?num(s.min_payment):null,in_networth:!!s.in_networth,archived:!!s.archived};
   let res=s.id?await sb.from('accounts').update(row).eq('id',s.id).select().single():await sb.from('accounts').insert({...row,sort:nextSort(D.accounts)}).select().single();
   if(res.error){toast(res.error.message,true);return;}
   if(s.id){const i=D.accounts.findIndex(a=>a.id===s.id);if(i>-1)D.accounts[i]=res.data;}else D.accounts.push(res.data);

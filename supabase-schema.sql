@@ -6,6 +6,7 @@ create table if not exists accounts (
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   name text not null,
   icon text,
+  lucide text,
   initial numeric not null default 0,
   type text not null default 'regular',
   currency text not null default 'UAH',
@@ -137,3 +138,6 @@ create index if not exists templates_user_id_idx on templates(user_id);
 create index if not exists templates_account_id_idx on templates(account_id);
 create index if not exists templates_to_account_id_idx on templates(to_account_id);
 create index if not exists templates_category_id_idx on templates(category_id);
+
+-- Міграція: підтримка Lucide-іконок для рахунків (у категорій колонка lucide вже була).
+alter table accounts add column if not exists lucide text;
