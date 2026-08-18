@@ -3,6 +3,9 @@
 <head>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Фінанси</title>
 <meta name="theme-color" content="#F4F3EE">
@@ -12,7 +15,6 @@
 <link rel="manifest" href='data:application/manifest+json,{"name":"Фінанси","short_name":"Фінанси","start_url":".","display":"standalone","background_color":"%230F1210","theme_color":"%230F1210"}'>
 <script>(function(){try{var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-accent',localStorage.getItem('accent')||'green');var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',t==='dark'?'#0F1210':'#F4F3EE');}catch(e){}})();</script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800&display=swap');
   :root{
     --bg:#F4F3EE;--surface:#FFFFFF;--surface2:#F4F2EB;--ink:#1A1C19;--muted:#6E7268;--line:#E7E4DA;--line-soft:#F0EEE7;
     --accent:#1E7A5E;--accent-soft:#E2F0E9;--income:#1E8A66;--expense:#C5523F;--transfer:#4A6FA5;--danger:#B23B2E;
@@ -223,7 +225,7 @@
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 let LU={}, mkIcon=null;
-try{ const L=await import('https://esm.sh/lucide@latest'); mkIcon=L.createElement; LU=L; }catch(e){ console.warn('lucide off',e); }
+try{ const L=await import('https://esm.sh/lucide@1.32.0'); mkIcon=L.createElement; LU=L; }catch(e){ console.warn('lucide off',e); }
 
 const DEF_EXPENSE=[
   {name:'Продукти',icon:'🛒',lucide:'ShoppingCart',color:'#F2683C'},
