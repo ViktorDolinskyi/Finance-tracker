@@ -392,6 +392,7 @@ async function seed(){
 }
 
 function syncCache(){try{localStorage.setItem('cache',JSON.stringify(D));}catch{}}
+const nextSort=arr=>arr.length?Math.max(...arr.map(x=>Number(x.sort)||0))+1:0;
 function toast(msg,isErr){
   let w=document.getElementById('toastWrap');
   if(!w){w=document.createElement('div');w.id='toastWrap';w.className='toast-wrap';document.body.appendChild(w);}
@@ -449,7 +450,7 @@ async function postPlan(p){
   renderApp();
 }
 async function setBudget(id,v){const b=num(v)||0;const{data,error}=await sb.from('categories').update({budget:b}).eq('id',id).select().single();if(error){toast(error.message,true);return;}const i=D.categories.findIndex(c=>c.id===id);if(i>-1)D.categories[i]=data;syncCache();renderApp();}
-async function addTag(name){const color=PALETTE[D.tags.length%PALETTE.length];const{data,error}=await sb.from('tags').insert({name,color,sort:D.tags.length}).select().single();if(error){toast(error.message,true);return;}D.tags.push(data);syncCache();renderApp();}
+async function addTag(name){const color=PALETTE[D.tags.length%PALETTE.length];const{data,error}=await sb.from('tags').insert({name,color,sort:nextSort(D.tags)}).select().single();if(error){toast(error.message,true);return;}D.tags.push(data);syncCache();renderApp();}
 async function delTag(id){if(!confirm('Видалити мітку?'))return;await sb.from('tags').delete().eq('id',id);D.tags=D.tags.filter(t=>t.id!==id);syncCache();renderApp();}
 async function saveSetting(patch){const{error}=await sb.from('settings').upsert({user_id:user.id,...patch},{onConflict:'user_id'});if(error){toast(error.message,true);return;}D.settings={...D.settings,...patch};syncCache();renderApp();}
 async function refreshRates(silent){
@@ -744,7 +745,7 @@ function openTemplate(t){
 }
 async function addTemplate(){
   const name=(prompt('Назва шаблону:','')||'').trim();if(!name)return;
-  const row={name,type:sheet.type,amount:num(sheet.amount)||0,account_id:sheet.accountId,to_account_id:sheet.type==='transfer'?sheet.toAccountId:null,to_amount:null,category_id:sheet.type==='transfer'?null:sheet.categoryId,note:(sheet.note||'').trim(),tags:sheet.tags||[],sort:D.templates.length};
+  const row={name,type:sheet.type,amount:num(sheet.amount)||0,account_id:sheet.accountId,to_account_id:sheet.type==='transfer'?sheet.toAccountId:null,to_amount:null,category_id:sheet.type==='transfer'?null:sheet.categoryId,note:(sheet.note||'').trim(),tags:sheet.tags||[],sort:nextSort(D.templates)};
   const{data,error}=await sb.from('templates').insert(row).select().single();if(error){toast(error.message,true);return;}D.templates.push(data);syncCache();renderApp();
 }
 async function delTemplate(id){const{error}=await sb.from('templates').delete().eq('id',id);if(error){toast(error.message,true);return;}D.templates=D.templates.filter(t=>t.id!==id);syncCache();renderApp();}
@@ -786,7 +787,7 @@ async function saveCategory(){
   const s=catSheet;if(!s.name.trim())return;
   const budget=s.kind==='expense'&&s.budgetOn?(num(s.budget)||0):0;
   const row={kind:s.kind,name:s.name.trim(),icon:s.icon||'•',lucide:s.lucide||null,color:s.color,budget};
-  let res=s.id?await sb.from('categories').update(row).eq('id',s.id).select().single():await sb.from('categories').insert({...row,sort:D.categories.length}).select().single();
+  let res=s.id?await sb.from('categories').update(row).eq('id',s.id).select().single():await sb.from('categories').insert({...row,sort:nextSort(D.categories)}).select().single();
   if(res.error){toast(res.error.message,true);return;}
   if(s.id){const i=D.categories.findIndex(c=>c.id===s.id);if(i>-1)D.categories[i]=res.data;}else D.categories.push(res.data);
   syncCache();
@@ -861,7 +862,7 @@ function renderAcctSheet(){
 async function saveAccount(){
   const s=acctSheet;if(!s.name.trim())return;
   const row={name:s.name.trim(),icon:(s.icon||'💳').trim()||'💳',type:s.type,currency:s.currency,initial:num(s.initial)||0,credit_limit:num(s.credit_limit)||0,due_date:s.type==='debt'&&s.due_date?s.due_date:null,interest_rate:(s.type==='debt'||s.type==='credit')&&num(s.interest_rate)?num(s.interest_rate):null,stmt_day:s.type==='credit'&&parseInt(s.stmt_day)?Math.min(31,Math.max(1,parseInt(s.stmt_day))):null,due_day:s.type==='credit'&&parseInt(s.due_day)?Math.min(31,Math.max(1,parseInt(s.due_day))):null,min_payment:s.type==='credit'&&num(s.min_payment)?num(s.min_payment):null,in_networth:!!s.in_networth,archived:!!s.archived};
-  let res=s.id?await sb.from('accounts').update(row).eq('id',s.id).select().single():await sb.from('accounts').insert({...row,sort:D.accounts.length}).select().single();
+  let res=s.id?await sb.from('accounts').update(row).eq('id',s.id).select().single():await sb.from('accounts').insert({...row,sort:nextSort(D.accounts)}).select().single();
   if(res.error){toast(res.error.message,true);return;}
   if(s.id){const i=D.accounts.findIndex(a=>a.id===s.id);if(i>-1)D.accounts[i]=res.data;}else D.accounts.push(res.data);
   syncCache();
