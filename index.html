@@ -784,15 +784,15 @@ function openAccount(a){
   acctInit=JSON.stringify(acctSheet);renderAcctSheet();
 }
 function closeAcctSheet(){acctSheet=null;acctInit=null;const o=document.getElementById('aov');if(o)o.remove();}
-function snapshotAcct(){const g=id=>document.getElementById(id);if(g('acName'))acctSheet.name=g('acName').value;if(g('acIcon'))acctSheet.icon=g('acIcon').value;if(g('acInit'))acctSheet.initial=g('acInit').value;if(g('acLimit'))acctSheet.credit_limit=g('acLimit').value;if(g('acDue'))acctSheet.due_date=g('acDue').value;if(g('acRate'))acctSheet.interest_rate=g('acRate').value;if(g('acStmt'))acctSheet.stmt_day=g('acStmt').value;if(g('acDueD'))acctSheet.due_day=g('acDueD').value;if(g('acMin'))acctSheet.min_payment=g('acMin').value;if(g('acNW'))acctSheet.in_networth=g('acNW').checked;if(g('acArch'))acctSheet.archived=g('acArch').checked;}
+function snapshotAcct(){const g=id=>document.getElementById(id);if(g('acName'))acctSheet.name=g('acName').value;if(g('acInit'))acctSheet.initial=g('acInit').value;if(g('acLimit'))acctSheet.credit_limit=g('acLimit').value;if(g('acDue'))acctSheet.due_date=g('acDue').value;if(g('acRate'))acctSheet.interest_rate=g('acRate').value;if(g('acStmt'))acctSheet.stmt_day=g('acStmt').value;if(g('acDueD'))acctSheet.due_day=g('acDueD').value;if(g('acMin'))acctSheet.min_payment=g('acMin').value;if(g('acNW'))acctSheet.in_networth=g('acNW').checked;if(g('acArch'))acctSheet.archived=g('acArch').checked;}
 function renderAcctSheet(){
   let o=document.getElementById('aov');if(o)o.remove();if(!acctSheet)return;
   const s=acctSheet;
   const html=`<div class="overlay" id="aov"><div class="sheet"><div class="sheet-grip"></div>
     <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="acClose" style="width:34px;height:34px"><span data-icon="X"></span></button></div>
     ${s.id?`<div class="sumcell mb"><div class="t">Поточний баланс</div><div class="v">${fmt(balanceOf(s.id),s.currency)}</div></div>`:''}
-    <div class="two mb"><div style="flex:0 0 70px"><label class="fld">Іконка</label><input id="acIcon" class="ico-in" style="width:100%" value="${esc(s.icon)}"></div><div><label class="fld">Назва</label><input id="acName" value="${esc(s.name)}" placeholder="Напр. Олеся / MONO"></div></div>
-    ${iconGrid(s.icon,'acIcons')}
+    <div class="two mb"><div style="flex:0 0 70px"><label class="fld">Іконка</label><button type="button" id="acIconBtn" class="icobtn" style="width:52px;height:52px;font-size:26px">${esc(s.icon)}</button></div><div><label class="fld">Назва</label><input id="acName" value="${esc(s.name)}" placeholder="Напр. Олеся / MONO"></div></div>
+    <div id="acIconsWrap" style="display:none">${iconGrid(s.icon,'acIcons')}</div>
     <div class="two mb"><div><label class="fld">Тип</label><select id="acType">${ATYPES.map(t=>`<option value="${t[0]}" ${t[0]===s.type?'selected':''}>${t[1]}</option>`).join('')}</select></div><div><label class="fld">Валюта</label><select id="acCur">${CURS.map(c=>`<option value="${c}" ${c===s.currency?'selected':''}>${c}</option>`).join('')}</select></div></div>
     <div class="mb"><label class="fld">${s.type==='debt'?'Баланс при створенні (＋ винні мені / − я винен)':'Початковий баланс'}</label><input id="acInit" type="number" inputmode="decimal" value="${esc(s.initial)}"></div>
     ${s.type==='credit'?`<div class="mb"><label class="fld">Кредитний ліміт</label><input id="acLimit" type="number" inputmode="decimal" value="${esc(s.credit_limit)}"></div>
@@ -807,7 +807,8 @@ function renderAcctSheet(){
   document.body.insertAdjacentHTML('beforeend',html);
   const ov=document.getElementById('aov');ov.onclick=e=>{if(e.target===ov)attemptCloseAcct();};document.getElementById('acClose').onclick=attemptCloseAcct;
   document.getElementById('acType').onchange=e=>{snapshotAcct();acctSheet.type=e.target.value;renderAcctSheet();};
-  ov.querySelectorAll('#acIcons .icobtn').forEach(b=>b.onclick=()=>{acctSheet.icon=b.dataset.ico;const inp=document.getElementById('acIcon');if(inp)inp.value=b.dataset.ico;ov.querySelectorAll('#acIcons .icobtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');});
+  document.getElementById('acIconBtn').onclick=()=>{const w=document.getElementById('acIconsWrap');w.style.display=w.style.display==='none'?'':'none';};
+  ov.querySelectorAll('#acIcons .icobtn').forEach(b=>b.onclick=()=>{acctSheet.icon=b.dataset.ico;const btn=document.getElementById('acIconBtn');if(btn)btn.textContent=b.dataset.ico;ov.querySelectorAll('#acIcons .icobtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');document.getElementById('acIconsWrap').style.display='none';});
   document.getElementById('acCur').onchange=e=>{acctSheet.currency=e.target.value;};
   document.getElementById('acSave').onclick=()=>{snapshotAcct();saveAccount();};
   const dl=document.getElementById('acDel');if(dl)dl.onclick=async()=>{const id=acctSheet.id;if(confirm('Видалити рахунок? Його операції лишаться без рахунку.')){closeAcctSheet();const{error}=await sb.from('accounts').delete().eq('id',id);if(error){alert(error.message);return;}await loadData();}};
