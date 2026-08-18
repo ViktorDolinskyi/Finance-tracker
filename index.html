@@ -395,7 +395,7 @@ function syncCache(){try{localStorage.setItem('cache',JSON.stringify(D));}catch{
 const nextSort=arr=>arr.length?Math.max(...arr.map(x=>Number(x.sort)||0))+1:0;
 function toast(msg,isErr){
   let w=document.getElementById('toastWrap');
-  if(!w){w=document.createElement('div');w.id='toastWrap';w.className='toast-wrap';document.body.appendChild(w);}
+  if(!w){w=document.createElement('div');w.id='toastWrap';w.className='toast-wrap';w.setAttribute('role','status');w.setAttribute('aria-live','polite');document.body.appendChild(w);}
   const el=document.createElement('div');el.className='toast'+(isErr?' err':'');el.textContent=msg;
   w.appendChild(el);
   requestAnimationFrame(()=>el.classList.add('on'));
