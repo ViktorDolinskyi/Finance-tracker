@@ -55,7 +55,7 @@
   .iconbtn:hover{border-color:var(--accent);color:var(--accent)} .iconbtn:active{transform:scale(.94)} .iconbtn svg{width:18px;height:18px}
   .hdr-actions{display:flex;gap:8px}
   .monthnav{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px}
-  .monthnav button{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
+  .monthnav button{width:44px;height:44px;border-radius:13px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
   .monthnav button:hover{color:var(--accent);border-color:var(--accent)} .monthnav button:active{transform:scale(.94)} .monthnav button svg{width:16px;height:16px}
   .monthnav .lbl{font-family:var(--display);font-weight:600;font-size:15px;min-width:158px;text-align:center;text-transform:capitalize;letter-spacing:-.01em}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}
@@ -779,7 +779,7 @@ function renderCatSheet(){
   let o=document.getElementById('cov');if(o)o.remove();if(!catSheet)return;
   const s=catSheet;
   const html=`<div class="overlay" id="cov"><div class="sheet"><div class="sheet-grip"></div>
-    <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="ccClose" style="width:34px;height:34px" aria-label="Закрити"><span data-icon="X"></span></button></div>
+    <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="ccClose" style="width:44px;height:44px" aria-label="Закрити"><span data-icon="X"></span></button></div>
     <div class="mb"><label class="fld">Назва</label><input id="ccName" value="${esc(s.name)}" placeholder="Назва категорії"></div>
     <label class="fld">Іконка</label>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px">${tile({icon:s.icon,lucide:s.lucide,color:s.color})}<span style="font-size:12px;color:var(--muted)">Обери іконку нижче</span></div>
@@ -826,7 +826,7 @@ async function openRatesChart(days){
     const last=a=>a.length?a[a.length-1].toFixed(2):'—';const first=a=>a.length?a[0]:0;
     const delta=a=>{if(a.length<2)return '';const d=a[a.length-1]-first(a);return ` <span style="color:${d>=0?'var(--income)':'var(--expense)'}">${d>=0?'▲':'▼'}${Math.abs(d).toFixed(2)}</span>`;};
     document.getElementById('rov').querySelector('.sheet').innerHTML=`<div class="sheet-grip"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h2 style="font-family:var(--display);font-size:17px;font-weight:700">Динаміка курсу · ${days===7?'тиждень':'місяць'}</h2><button class="iconbtn" id="rClose" style="width:34px;height:34px" aria-label="Закрити"><span data-icon="X"></span></button></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h2 style="font-family:var(--display);font-size:17px;font-weight:700">Динаміка курсу · ${days===7?'тиждень':'місяць'}</h2><button class="iconbtn" id="rClose" style="width:44px;height:44px" aria-label="Закрити"><span data-icon="X"></span></button></div>
       ${svg}
       <div class="chips" style="margin-top:12px"><span class="chip"><span class="dot" style="background:var(--accent)"></span>USD ${last(u)} ₴${delta(u)}</span><span class="chip"><span class="dot" style="background:var(--muted)"></span>EUR ${last(e)} ₴${delta(e)}</span></div>
       <div style="font-size:11px;color:var(--muted);margin-top:10px">Джерело: Національний банк України</div>`;
@@ -849,7 +849,7 @@ function renderAcctSheet(){
   let o=document.getElementById('aov');if(o)o.remove();if(!acctSheet)return;
   const s=acctSheet;
   const html=`<div class="overlay" id="aov"><div class="sheet"><div class="sheet-grip"></div>
-    <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="acClose" style="width:34px;height:34px" aria-label="Закрити"><span data-icon="X"></span></button></div>
+    <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="acClose" style="width:44px;height:44px" aria-label="Закрити"><span data-icon="X"></span></button></div>
     <div class="two mb"><div style="flex:0 0 70px"><label class="fld">Іконка</label><button type="button" id="acIconBtn" class="icobtn" style="width:52px;height:52px;font-size:26px" aria-label="Обрати іконку">${esc(s.icon)}</button></div><div><label class="fld">Назва</label><input id="acName" value="${esc(s.name)}" placeholder="Напр. Олеся / MONO"></div></div>
     <div id="acIconsWrap" style="display:none">${iconGrid(s.icon,'acIcons')}</div>
     <div class="two mb"><div><label class="fld">Тип</label><select id="acType">${ATYPES.map(t=>`<option value="${t[0]}" ${t[0]===s.type?'selected':''}>${t[1]}</option>`).join('')}</select></div><div><label class="fld">Валюта</label><select id="acCur">${CURS.map(c=>`<option value="${c}" ${c===s.currency?'selected':''}>${c}</option>`).join('')}</select></div></div>
@@ -908,7 +908,7 @@ function renderSheet(){
   const tagsBlock=D.tags.length?`<div class="mb"><label class="fld">Мітки</label><div class="chips" id="shTags">${D.tags.map(t=>`<button type="button" class="chip ${sheet.tags.includes(t.id)?'on':''}" data-tag="${t.id}"><span class="dot" style="background:${t.color}"></span>${esc(t.name)}</button>`).join('')}</div></div>`:'';
   const html=`<div class="overlay" id="ov"><div class="sheet">
     <div class="sheet-grip"></div>
-    <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="shClose" style="width:34px;height:34px" aria-label="Закрити"><span data-icon="X"></span></button></div>
+    <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="shClose" style="width:44px;height:44px" aria-label="Закрити"><span data-icon="X"></span></button></div>
     <div class="seg">
       <button data-t="expense" class="${sheet.type==='expense'?'on exp':''}">Витрата</button>
       <button data-t="income" class="${sheet.type==='income'?'on inc':''}">Дохід</button>
