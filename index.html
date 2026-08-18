@@ -218,6 +218,10 @@
   .badge{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 9px;white-space:nowrap;flex:none}
   .ratelink{color:var(--accent);font-weight:600;cursor:pointer}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  .toast-wrap{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:100%;padding:0 20px}
+  .toast{background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:13px;font-size:13px;font-weight:600;box-shadow:var(--lift);opacity:0;transform:translateY(8px);transition:opacity .2s ease,transform .2s ease;max-width:min(88vw,420px);text-align:center;white-space:pre-line}
+  .toast.on{opacity:1;transform:none}
+  .toast.err{background:var(--danger)}
 </style>
 </head>
 <body>
@@ -376,6 +380,14 @@ async function seed(){
 }
 
 function syncCache(){try{localStorage.setItem('cache',JSON.stringify(D));}catch{}}
+function toast(msg,isErr){
+  let w=document.getElementById('toastWrap');
+  if(!w){w=document.createElement('div');w.id='toastWrap';w.className='toast-wrap';document.body.appendChild(w);}
+  const el=document.createElement('div');el.className='toast'+(isErr?' err':'');el.textContent=msg;
+  w.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('on'));
+  setTimeout(()=>{el.classList.remove('on');setTimeout(()=>el.remove(),220);},3200);
+}
 async function saveTx(){
   const amount=num(sheet.amount);
   if(!amount||amount<=0)return;
@@ -389,13 +401,13 @@ async function saveTx(){
     category_id:sheet.type==='transfer'?null:sheet.categoryId,
     occurred_at:inputToISO(sheet.date),note:(sheet.note||'').trim(),tags:sheet.tags||[]};
   let res=sheet.id?await sb.from('transactions').update(row).eq('id',sheet.id).select().single():await sb.from('transactions').insert(row).select().single();
-  if(res.error){alert('Помилка: '+res.error.message);return;}
+  if(res.error){toast('Помилка: '+res.error.message,true);return;}
   if(sheet.id){const i=D.txs.findIndex(t=>t.id===sheet.id);if(i>-1)D.txs[i]=res.data;}else D.txs.unshift(res.data);
   syncCache();
   if(sheet.type!=='transfer')month=monthKey(new Date(sheet.date));
   closeSheet(); renderApp();
 }
-async function delTx(id){const{error}=await sb.from('transactions').delete().eq('id',id);if(error){alert(error.message);return;}D.txs=D.txs.filter(t=>t.id!==id);syncCache();closeSheet();renderApp();}
+async function delTx(id){const{error}=await sb.from('transactions').delete().eq('id',id);if(error){toast(error.message,true);return;}D.txs=D.txs.filter(t=>t.id!==id);syncCache();closeSheet();renderApp();}
 async function savePlan(){
   const amount=num(sheet.amount);if(!amount||amount<=0)return;
   if(sheet.type!=='transfer'&&!sheet.categoryId)return;
@@ -403,16 +415,16 @@ async function savePlan(){
   let to_amount=null;if(sheet.type==='transfer'){const fc=accCur(sheet.accountId),tc=accCur(sheet.toAccountId);to_amount=(fc!==tc)?(num(sheet.toAmount)||amount):amount;}
   const row={type:sheet.type,amount:Math.round(amount*100)/100,account_id:sheet.accountId,to_account_id:sheet.type==='transfer'?sheet.toAccountId:null,to_amount:to_amount!=null?Math.round(to_amount*100)/100:null,category_id:sheet.type==='transfer'?null:sheet.categoryId,note:(sheet.note||'').trim(),tags:sheet.tags||[],next_date:sheet.nextDate,repeat:sheet.repeat||'none',active:true};
   let res=sheet.planId?await sb.from('planned').update(row).eq('id',sheet.planId).select().single():await sb.from('planned').insert(row).select().single();
-  if(res.error){alert(res.error.message);return;}
+  if(res.error){toast(res.error.message,true);return;}
   if(sheet.planId){const i=D.planned.findIndex(x=>x.id===sheet.planId);if(i>-1)D.planned[i]=res.data;}else D.planned.push(res.data);
   syncCache();
   closeSheet();renderApp();
 }
-async function delPlan(id){const{error}=await sb.from('planned').delete().eq('id',id);if(error){alert(error.message);return;}D.planned=D.planned.filter(x=>x.id!==id);syncCache();closeSheet();renderApp();}
+async function delPlan(id){const{error}=await sb.from('planned').delete().eq('id',id);if(error){toast(error.message,true);return;}D.planned=D.planned.filter(x=>x.id!==id);syncCache();closeSheet();renderApp();}
 async function postPlan(p){
   const occ=new Date(p.next_date+'T12:00:00').toISOString();
   const ins=await sb.from('transactions').insert({type:p.type,amount:p.amount,account_id:p.account_id,to_account_id:p.to_account_id,to_amount:p.to_amount,category_id:p.category_id,occurred_at:occ,note:p.note||'',tags:p.tags||[]}).select().single();
-  if(ins.error){alert(ins.error.message);return;}
+  if(ins.error){toast(ins.error.message,true);return;}
   D.txs.unshift(ins.data);
   if(p.repeat&&p.repeat!=='none'){
     const upd=await sb.from('planned').update({next_date:advanceDate(p.next_date,p.repeat)}).eq('id',p.id).select().single();
@@ -428,10 +440,10 @@ async function addAccount(o){await sb.from('accounts').insert({name:o.name,icon:
 async function delAccount(id){if(!confirm('Видалити рахунок? Його операції лишаться без рахунку.'))return;await sb.from('accounts').delete().eq('id',id);D.accounts=D.accounts.filter(a=>a.id!==id);syncCache();renderApp();}
 async function addCategory(kind,name,icon){const color=PALETTE[D.categories.length%PALETTE.length];await sb.from('categories').insert({kind,name,icon:icon||'•',color,sort:D.categories.length});await loadData();}
 async function delCategory(id){if(!confirm('Видалити категорію?'))return;await sb.from('categories').delete().eq('id',id);D.categories=D.categories.filter(c=>c.id!==id);syncCache();renderApp();}
-async function setBudget(id,v){const b=num(v)||0;const{data,error}=await sb.from('categories').update({budget:b}).eq('id',id).select().single();if(error){alert(error.message);return;}const i=D.categories.findIndex(c=>c.id===id);if(i>-1)D.categories[i]=data;syncCache();renderApp();}
-async function addTag(name){const color=PALETTE[D.tags.length%PALETTE.length];const{data,error}=await sb.from('tags').insert({name,color,sort:D.tags.length}).select().single();if(error){alert(error.message);return;}D.tags.push(data);syncCache();renderApp();}
+async function setBudget(id,v){const b=num(v)||0;const{data,error}=await sb.from('categories').update({budget:b}).eq('id',id).select().single();if(error){toast(error.message,true);return;}const i=D.categories.findIndex(c=>c.id===id);if(i>-1)D.categories[i]=data;syncCache();renderApp();}
+async function addTag(name){const color=PALETTE[D.tags.length%PALETTE.length];const{data,error}=await sb.from('tags').insert({name,color,sort:D.tags.length}).select().single();if(error){toast(error.message,true);return;}D.tags.push(data);syncCache();renderApp();}
 async function delTag(id){if(!confirm('Видалити мітку?'))return;await sb.from('tags').delete().eq('id',id);D.tags=D.tags.filter(t=>t.id!==id);syncCache();renderApp();}
-async function saveSetting(patch){const{error}=await sb.from('settings').upsert({user_id:user.id,...patch},{onConflict:'user_id'});if(error){alert(error.message);return;}D.settings={...D.settings,...patch};syncCache();renderApp();}
+async function saveSetting(patch){const{error}=await sb.from('settings').upsert({user_id:user.id,...patch},{onConflict:'user_id'});if(error){toast(error.message,true);return;}D.settings={...D.settings,...patch};syncCache();renderApp();}
 async function refreshRates(silent){
   const rb=document.getElementById('ratesBtn');if(rb&&!silent){rb.disabled=true;rb.textContent='Оновлюю…';}
   try{
@@ -442,9 +454,9 @@ async function refreshRates(silent){
     if(!usd||!eur)throw new Error('no data');
     try{localStorage.setItem('ratesDate',todayDate());localStorage.setItem('ratesAt',new Date().toISOString());}catch(e){}
     await saveSetting({usd_rate:Math.round(usd.rate*100)/100,eur_rate:Math.round(eur.rate*100)/100});
-    if(!silent)alert('Курс НБУ оновлено:\n$ '+usd.rate.toFixed(2)+' ₴\n€ '+eur.rate.toFixed(2)+' ₴');
+    if(!silent)toast('Курс НБУ оновлено: $ '+usd.rate.toFixed(2)+' ₴ · € '+eur.rate.toFixed(2)+' ₴');
   }catch(e){
-    if(!silent){alert('Не вдалося отримати курс НБУ. Перевір зʼєднання або введи вручну.');renderApp();}
+    if(!silent){toast('Не вдалося отримати курс НБУ. Перевір зʼєднання або введи вручну.',true);renderApp();}
   }
 }
 
@@ -717,9 +729,9 @@ function openTemplate(t){
 async function addTemplate(){
   const name=(prompt('Назва шаблону:','')||'').trim();if(!name)return;
   const row={name,type:sheet.type,amount:num(sheet.amount)||0,account_id:sheet.accountId,to_account_id:sheet.type==='transfer'?sheet.toAccountId:null,to_amount:null,category_id:sheet.type==='transfer'?null:sheet.categoryId,note:(sheet.note||'').trim(),tags:sheet.tags||[],sort:D.templates.length};
-  const{data,error}=await sb.from('templates').insert(row).select().single();if(error){alert(error.message);return;}D.templates.push(data);syncCache();renderApp();
+  const{data,error}=await sb.from('templates').insert(row).select().single();if(error){toast(error.message,true);return;}D.templates.push(data);syncCache();renderApp();
 }
-async function delTemplate(id){const{error}=await sb.from('templates').delete().eq('id',id);if(error){alert(error.message);return;}D.templates=D.templates.filter(t=>t.id!==id);syncCache();renderApp();}
+async function delTemplate(id){const{error}=await sb.from('templates').delete().eq('id',id);if(error){toast(error.message,true);return;}D.templates=D.templates.filter(t=>t.id!==id);syncCache();renderApp();}
 function closeSheet(){sheet=null;sheetInit=null;const o=document.getElementById('ov');if(o)o.remove();}
 function attemptCloseSheet(){if(!sheet){closeSheet();return;}snapshotSheet();if(sheetInit&&normSheet(sheet)!==sheetInit){if(confirm('Є незбережені зміни.\nOK — зберегти, Скасувати — вийти без збереження.')){snapshotSheet();sheet.planMode?savePlan():saveTx();return;}}closeSheet();}
 function attemptCloseAcct(){if(!acctSheet){closeAcctSheet();return;}snapshotAcct();if(acctInit&&JSON.stringify(acctSheet)!==acctInit){if(confirm('Є незбережені зміни.\nOK — зберегти, Скасувати — вийти без збереження.')){snapshotAcct();saveAccount();return;}}closeAcctSheet();}
@@ -751,7 +763,7 @@ function renderCatSheet(){
   ov.querySelectorAll('#ccIcons .icobtn').forEach(b=>b.onclick=()=>{catSheet.icon=b.dataset.ico;catSheet.lucide=null;const pv=ov.querySelector('.ic');if(pv){pv.textContent=b.dataset.ico;pv.removeAttribute('data-icon');}ov.querySelectorAll('#ccIcons .icobtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');});
   const bo=document.getElementById('ccBudOn');if(bo)bo.onchange=()=>{snapshotCat();catSheet.budgetOn=bo.checked;renderCatSheet();};
   document.getElementById('ccSave').onclick=()=>{snapshotCat();saveCategory();};
-  const dl=document.getElementById('ccDel');if(dl)dl.onclick=async()=>{const id=s.id;if(confirm('Видалити категорію?')){closeCatSheet();const{error}=await sb.from('categories').delete().eq('id',id);if(error){alert(error.message);return;}D.categories=D.categories.filter(c=>c.id!==id);syncCache();renderApp();}};
+  const dl=document.getElementById('ccDel');if(dl)dl.onclick=async()=>{const id=s.id;if(confirm('Видалити категорію?')){closeCatSheet();const{error}=await sb.from('categories').delete().eq('id',id);if(error){toast(error.message,true);return;}D.categories=D.categories.filter(c=>c.id!==id);syncCache();renderApp();}};
   paintIcons(ov);
 }
 async function saveCategory(){
@@ -759,7 +771,7 @@ async function saveCategory(){
   const budget=s.kind==='expense'&&s.budgetOn?(num(s.budget)||0):0;
   const row={kind:s.kind,name:s.name.trim(),icon:s.icon||'•',lucide:s.lucide||null,color:s.color,budget};
   let res=s.id?await sb.from('categories').update(row).eq('id',s.id).select().single():await sb.from('categories').insert({...row,sort:D.categories.length}).select().single();
-  if(res.error){alert(res.error.message);return;}
+  if(res.error){toast(res.error.message,true);return;}
   if(s.id){const i=D.categories.findIndex(c=>c.id===s.id);if(i>-1)D.categories[i]=res.data;}else D.categories.push(res.data);
   syncCache();
   closeCatSheet();renderApp();
@@ -827,14 +839,14 @@ function renderAcctSheet(){
   ov.querySelectorAll('#acIcons .icobtn').forEach(b=>b.onclick=()=>{acctSheet.icon=b.dataset.ico;const btn=document.getElementById('acIconBtn');if(btn)btn.textContent=b.dataset.ico;ov.querySelectorAll('#acIcons .icobtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');document.getElementById('acIconsWrap').style.display='none';});
   document.getElementById('acCur').onchange=e=>{acctSheet.currency=e.target.value;};
   document.getElementById('acSave').onclick=()=>{snapshotAcct();saveAccount();};
-  const dl=document.getElementById('acDel');if(dl)dl.onclick=async()=>{const id=acctSheet.id;if(confirm('Видалити рахунок? Його операції лишаться без рахунку.')){closeAcctSheet();const{error}=await sb.from('accounts').delete().eq('id',id);if(error){alert(error.message);return;}D.accounts=D.accounts.filter(a=>a.id!==id);syncCache();renderApp();}};
+  const dl=document.getElementById('acDel');if(dl)dl.onclick=async()=>{const id=acctSheet.id;if(confirm('Видалити рахунок? Його операції лишаться без рахунку.')){closeAcctSheet();const{error}=await sb.from('accounts').delete().eq('id',id);if(error){toast(error.message,true);return;}D.accounts=D.accounts.filter(a=>a.id!==id);syncCache();renderApp();}};
   if(paintIcons)paintIcons();
 }
 async function saveAccount(){
   const s=acctSheet;if(!s.name.trim())return;
   const row={name:s.name.trim(),icon:(s.icon||'💳').trim()||'💳',type:s.type,currency:s.currency,initial:num(s.initial)||0,credit_limit:num(s.credit_limit)||0,due_date:s.type==='debt'&&s.due_date?s.due_date:null,interest_rate:(s.type==='debt'||s.type==='credit')&&num(s.interest_rate)?num(s.interest_rate):null,stmt_day:s.type==='credit'&&parseInt(s.stmt_day)?Math.min(31,Math.max(1,parseInt(s.stmt_day))):null,due_day:s.type==='credit'&&parseInt(s.due_day)?Math.min(31,Math.max(1,parseInt(s.due_day))):null,min_payment:s.type==='credit'&&num(s.min_payment)?num(s.min_payment):null,in_networth:!!s.in_networth,archived:!!s.archived};
   let res=s.id?await sb.from('accounts').update(row).eq('id',s.id).select().single():await sb.from('accounts').insert({...row,sort:D.accounts.length}).select().single();
-  if(res.error){alert(res.error.message);return;}
+  if(res.error){toast(res.error.message,true);return;}
   if(s.id){const i=D.accounts.findIndex(a=>a.id===s.id);if(i>-1)D.accounts[i]=res.data;}else D.accounts.push(res.data);
   syncCache();
   closeAcctSheet();renderApp();
@@ -889,7 +901,7 @@ function renderSheet(){
   ov.querySelectorAll('#shTags .chip').forEach(b=>b.onclick=()=>{const id=b.dataset.tag;const i=sheet.tags.indexOf(id);if(i>=0)sheet.tags.splice(i,1);else sheet.tags.push(id);b.classList.toggle('on');});
   document.getElementById('shSave').onclick=()=>{snapshotSheet();sheet.planMode?savePlan():saveTx();};
   const dl=document.getElementById('shDel');if(dl)dl.onclick=()=>{if(confirm(sheet.planMode?'Видалити план?':'Видалити операцію?')){sheet.planMode?delPlan(sheet.planId):delTx(sheet.id);}};
-  const tpb=document.getElementById('shTpl');if(tpb)tpb.onclick=()=>{snapshotSheet();if(sheet.type!=='transfer'&&!sheet.categoryId){alert('Спершу оберіть категорію');return;}addTemplate();};
+  const tpb=document.getElementById('shTpl');if(tpb)tpb.onclick=()=>{snapshotSheet();if(sheet.type!=='transfer'&&!sheet.categoryId){toast('Спершу оберіть категорію',true);return;}addTemplate();};
   paintIcons(ov);
 }
 
