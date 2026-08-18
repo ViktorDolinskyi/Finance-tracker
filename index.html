@@ -229,7 +229,7 @@
 <div class="wrap" id="root"><div class="loading">Завантаження…</div></div>
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { curSign, fmt, fmt0, num, advanceDate, toUAH as toUAHPure, computeBalance, computeBalanceAt, esc } from './finance-utils.js';
+import { curSign, fmt, fmt0, num, advanceDate, toUAH as toUAHPure, computeBalance, computeBalanceAt, esc, groupDigits, ungroupDigits } from './finance-utils.js';
 let LU={}, mkIcon=null;
 try{ const L=await import('https://esm.sh/lucide@1.32.0'); mkIcon=L.createElement; LU=L; }catch(e){ console.warn('lucide off',e); }
 
@@ -314,6 +314,18 @@ function paintIcons(scope){(scope||document).querySelectorAll('[data-icon]').for
   if(el.dataset.done)return;el.dataset.done='1';
   try{const n=LU[el.dataset.icon];if(mkIcon&&n){const s=mkIcon(n);s.setAttribute('stroke-width','2.1');el.appendChild(s);return;}}catch(e){}
   if(el.dataset.emoji)el.textContent=el.dataset.emoji;
+});}
+function bindMoneyInputs(scope){(scope||document).querySelectorAll('.money-in').forEach(inp=>{
+  if(inp.dataset.moneyBound)return;inp.dataset.moneyBound='1';
+  inp.addEventListener('input',()=>{
+    const pos=inp.selectionStart;
+    const digitsBefore=ungroupDigits(inp.value.slice(0,pos)).length;
+    inp.value=groupDigits(inp.value);
+    let count=0,newPos=inp.value.length;
+    if(digitsBefore===0)newPos=0;
+    else for(let i=0;i<inp.value.length;i++){if(inp.value[i]!==' '){count++;if(count===digitsBefore){newPos=i+1;break;}}}
+    inp.setSelectionRange(newPos,newPos);
+  });
 });}
 
 const accMap=()=>Object.fromEntries(D.accounts.map(a=>[a.id,a]));
@@ -773,7 +785,7 @@ function renderCatSheet(){
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px">${tile({icon:s.icon,lucide:s.lucide,color:s.color})}<span style="font-size:12px;color:var(--muted)">Обери іконку нижче</span></div>
     ${iconGrid(s.icon,'ccIcons')}
     ${s.kind==='expense'?`<div class="swrow" style="margin-top:16px"><div class="lbl">Бюджет на місяць</div><label class="switch"><input type="checkbox" id="ccBudOn" ${s.budgetOn?'checked':''}><span class="sl"></span></label></div>
-    ${s.budgetOn?`<div class="mb" style="margin-top:8px"><input id="ccBud" type="number" inputmode="decimal" placeholder="Сума бюджету, ₴" value="${esc(s.budget)}"></div>`:''}`:''}
+    ${s.budgetOn?`<div class="mb" style="margin-top:8px"><input id="ccBud" class="money-in" type="text" inputmode="decimal" placeholder="Сума бюджету, ₴" value="${esc(groupDigits(s.budget))}"></div>`:''}`:''}
     <button class="btn block" id="ccSave" style="margin-top:14px">${s.id?'Зберегти':'Додати категорію'}</button>
     ${s.id?`<button class="btn danger block" id="ccDel" style="margin-top:8px">Видалити</button>`:''}
   </div></div>`;
@@ -784,7 +796,7 @@ function renderCatSheet(){
   const bo=document.getElementById('ccBudOn');if(bo)bo.onchange=()=>{snapshotCat();catSheet.budgetOn=bo.checked;renderCatSheet();};
   document.getElementById('ccSave').onclick=()=>{snapshotCat();saveCategory();};
   const dl=document.getElementById('ccDel');if(dl)dl.onclick=async()=>{const id=s.id;if(confirm('Видалити категорію?')){closeCatSheet();const{error}=await sb.from('categories').delete().eq('id',id);if(error){toast(error.message,true);return;}D.categories=D.categories.filter(c=>c.id!==id);syncCache();renderApp();}};
-  paintIcons(ov);
+  paintIcons(ov);bindMoneyInputs(ov);
 }
 async function saveCategory(){
   const s=catSheet;if(!s.name.trim())return;
@@ -841,9 +853,9 @@ function renderAcctSheet(){
     <div class="two mb"><div style="flex:0 0 70px"><label class="fld">Іконка</label><button type="button" id="acIconBtn" class="icobtn" style="width:52px;height:52px;font-size:26px" aria-label="Обрати іконку">${esc(s.icon)}</button></div><div><label class="fld">Назва</label><input id="acName" value="${esc(s.name)}" placeholder="Напр. Олеся / MONO"></div></div>
     <div id="acIconsWrap" style="display:none">${iconGrid(s.icon,'acIcons')}</div>
     <div class="two mb"><div><label class="fld">Тип</label><select id="acType">${ATYPES.map(t=>`<option value="${t[0]}" ${t[0]===s.type?'selected':''}>${t[1]}</option>`).join('')}</select></div><div><label class="fld">Валюта</label><select id="acCur">${CURS.map(c=>`<option value="${c}" ${c===s.currency?'selected':''}>${c}</option>`).join('')}</select></div></div>
-    ${s.id?`<div class="mb"><label class="fld">${s.type==='debt'?'Поточний баланс (＋ винні мені / − я винен)':'Поточний баланс'}</label><input id="acCurrent" type="number" inputmode="decimal" value="${esc(s.current)}"></div>`
-      :`<div class="mb"><label class="fld">${s.type==='debt'?'Баланс при створенні (＋ винні мені / − я винен)':'Початковий баланс'}</label><input id="acInit" type="number" inputmode="decimal" value="${esc(s.initial)}"></div>`}
-    ${s.type==='credit'?`<div class="mb"><label class="fld">Кредитний ліміт</label><input id="acLimit" type="number" inputmode="decimal" value="${esc(s.credit_limit)}"></div>
+    ${s.id?`<div class="mb"><label class="fld">${s.type==='debt'?'Поточний баланс (＋ винні мені / − я винен)':'Поточний баланс'}</label><input id="acCurrent" class="money-in" type="text" inputmode="decimal" value="${esc(groupDigits(s.current))}"></div>`
+      :`<div class="mb"><label class="fld">${s.type==='debt'?'Баланс при створенні (＋ винні мені / − я винен)':'Початковий баланс'}</label><input id="acInit" class="money-in" type="text" inputmode="decimal" value="${esc(groupDigits(s.initial))}"></div>`}
+    ${s.type==='credit'?`<div class="mb"><label class="fld">Кредитний ліміт</label><input id="acLimit" class="money-in" type="text" inputmode="decimal" value="${esc(groupDigits(s.credit_limit))}"></div>
     <div class="two mb"><div><label class="fld">Ставка %/рік</label><input id="acRate" type="number" inputmode="decimal" value="${esc(s.interest_rate)}" placeholder="напр. 35"></div><div><label class="fld">Мін. платіж %</label><input id="acMin" type="number" inputmode="decimal" value="${esc(s.min_payment)}" placeholder="напр. 5"></div></div>
     <div class="two mb"><div><label class="fld">День виписки</label><input id="acStmt" type="number" inputmode="numeric" min="1" max="31" value="${esc(s.stmt_day)}" placeholder="1–31"></div><div><label class="fld">День платежу</label><input id="acDueD" type="number" inputmode="numeric" min="1" max="31" value="${esc(s.due_day)}" placeholder="1–31"></div></div>`:''}
     ${s.type==='debt'?`<div class="two mb"><div><label class="fld">Дата повернення</label><input id="acDue" type="date" value="${esc(s.due_date)}"></div><div><label class="fld">Ставка %/рік</label><input id="acRate" type="number" inputmode="decimal" value="${esc(s.interest_rate)}" placeholder="необов'язково"></div></div>`:''}
@@ -861,6 +873,7 @@ function renderAcctSheet(){
   document.getElementById('acSave').onclick=()=>{snapshotAcct();saveAccount();};
   const dl=document.getElementById('acDel');if(dl)dl.onclick=async()=>{const id=acctSheet.id;if(confirm('Видалити рахунок? Його операції лишаться без рахунку.')){closeAcctSheet();const{error}=await sb.from('accounts').delete().eq('id',id);if(error){toast(error.message,true);return;}D.accounts=D.accounts.filter(a=>a.id!==id);syncCache();renderApp();}};
   if(paintIcons)paintIcons();
+  bindMoneyInputs(ov);
 }
 async function saveAccount(){
   const s=acctSheet;if(!s.name.trim())return;
@@ -885,7 +898,7 @@ function renderSheet(){
   const createdRef=sheet.createdAt||new Date().toISOString();
   const dateDiffers=!sheet.planMode&&sheet.date&&dayOf(sheet.date)!==dayOf(createdRef);
   const accBlock=sheet.type==='transfer'
-    ? `<div class="two mb"><div><label class="fld">З рахунку</label><select id="shAcc">${opt(sheet.accountId)}</select></div><div><label class="fld">На рахунок</label><select id="shTo">${opt(sheet.toAccountId)}</select></div></div>${diffCur?`<div class="mb"><label class="fld">Сума зарахування (${accCur(sheet.toAccountId)})</label><input id="shToAmt" type="number" inputmode="decimal" placeholder="0" value="${esc(sheet.toAmount)}"></div>`:''}`
+    ? `<div class="two mb"><div><label class="fld">З рахунку</label><select id="shAcc">${opt(sheet.accountId)}</select></div><div><label class="fld">На рахунок</label><select id="shTo">${opt(sheet.toAccountId)}</select></div></div>${diffCur?`<div class="mb"><label class="fld">Сума зарахування (${accCur(sheet.toAccountId)})</label><input id="shToAmt" class="money-in" type="text" inputmode="decimal" placeholder="0" value="${esc(groupDigits(sheet.toAmount))}"></div>`:''}`
     : `<div class="mb"><label class="fld">Рахунок</label><select id="shAcc">${opt(sheet.accountId)}</select></div>`;
   const dateBlock=sheet.planMode
     ? `<div class="two mb"><div><label class="fld">Наступна дата</label><input id="shDate" type="date" value="${esc(sheet.nextDate)}"></div><div><label class="fld">Повторення</label><select id="shRepeat">${REPEATS.map(r=>`<option value="${r[0]}" ${r[0]===sheet.repeat?'selected':''}>${r[1]}</option>`).join('')}</select></div></div>`
@@ -901,7 +914,7 @@ function renderSheet(){
       <button data-t="income" class="${sheet.type==='income'?'on inc':''}">Дохід</button>
       <button data-t="transfer" class="${sheet.type==='transfer'?'on trf':''}">Переказ</button>
     </div>
-    <input id="shAmount" class="amount-in" type="number" inputmode="decimal" placeholder="0" value="${esc(sheet.amount)}" autofocus>
+    <input id="shAmount" class="amount-in money-in" type="text" inputmode="decimal" placeholder="0" value="${esc(groupDigits(sheet.amount))}" autofocus>
     ${accBlock}
     ${dateBlock}
     ${noteBlock}
@@ -924,7 +937,7 @@ function renderSheet(){
   document.getElementById('shSave').onclick=()=>{snapshotSheet();sheet.planMode?savePlan():saveTx();};
   const dl=document.getElementById('shDel');if(dl)dl.onclick=()=>{if(confirm(sheet.planMode?'Видалити план?':'Видалити операцію?')){sheet.planMode?delPlan(sheet.planId):delTx(sheet.id);}};
   const tpb=document.getElementById('shTpl');if(tpb)tpb.onclick=()=>{snapshotSheet();if(sheet.type!=='transfer'&&!sheet.categoryId){toast('Спершу оберіть категорію',true);return;}addTemplate();};
-  paintIcons(ov);
+  paintIcons(ov);bindMoneyInputs(ov);
 }
 
 function exportCSV(){

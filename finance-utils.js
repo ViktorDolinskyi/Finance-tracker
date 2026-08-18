@@ -14,7 +14,24 @@ export const fmt = (n, c = 'UAH') => {
 export const fmt0 = (n, c = 'UAH') =>
   new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 0 }).format(Math.round(n)) + ' ' + curSign(c);
 
-export const num = s => parseFloat(String(s).replace(',', '.'));
+// Прибирає розділювачі тисяч (NBSP   або звичайний пробіл), щоб можна було коректно
+// розпарсити значення, яке вже показане у відформатованому інпуті.
+export const ungroupDigits = s => String(s == null ? '' : s).replace(/[  ]/g, '');
+
+export const num = s => parseFloat(ungroupDigits(s).replace(',', '.'));
+
+// Вставляє NBSP-розділювач тисяч ( ) у цілу частину рядка, зберігаючи десяткову частину як є
+// (для live-форматування грошових інпутів під час набору).
+export function groupDigits(raw) {
+  if (raw == null) return '';
+  let s = ungroupDigits(raw);
+  const neg = s.startsWith('-') ? '-' : '';
+  if (neg) s = s.slice(1);
+  const m = s.match(/^(\d*)([.,]?)(\d*)$/);
+  if (!m) return neg + s;
+  const intPart = m[1].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return neg + intPart + m[2] + m[3];
+}
 
 export function advanceDate(ds, rep) {
   const [y, m, d] = ds.split('-').map(Number);

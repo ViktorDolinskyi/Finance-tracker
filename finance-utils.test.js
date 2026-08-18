@@ -1,7 +1,7 @@
 // Запуск: node --test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { curSign, fmt, num, advanceDate, toUAH, computeBalance, computeBalanceAt, esc } from './finance-utils.js';
+import { curSign, fmt, num, advanceDate, toUAH, computeBalance, computeBalanceAt, esc, groupDigits, ungroupDigits } from './finance-utils.js';
 
 test('curSign', () => {
   assert.equal(curSign('USD'), '$');
@@ -74,4 +74,17 @@ test('computeBalanceAt: ignores transactions after the cutoff date', () => {
   ];
   assert.equal(computeBalanceAt(0, txs, 'a', '2026-01-31T23:59:59Z'), 100);
   assert.equal(computeBalanceAt(0, txs, 'a', '2026-02-28T23:59:59Z'), 150);
+});
+
+test('groupDigits inserts NBSP thousands separators, ungroupDigits reverses it', () => {
+  assert.equal(groupDigits('1000'), '1' + ' ' + '000');
+  assert.equal(groupDigits('1234567'), '1' + ' ' + '234' + ' ' + '567');
+  assert.equal(groupDigits('1000,5'), '1' + ' ' + '000,5');
+  assert.equal(groupDigits('-2000'), '-2' + ' ' + '000');
+  assert.equal(groupDigits('42'), '42');
+  assert.equal(groupDigits(''), '');
+  assert.equal(groupDigits(null), '');
+  assert.equal(ungroupDigits('1' + ' ' + '234' + ' ' + '567'), '1234567');
+  assert.equal(ungroupDigits('1 234 567'), '1234567'); // звичайний пробіл теж прибирається
+  assert.equal(num(groupDigits('1234567,89')), 1234567.89); // round-trip через num()
 });
