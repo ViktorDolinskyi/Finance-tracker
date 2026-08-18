@@ -838,13 +838,30 @@ async function openRatesChart(days){
   }
 }
 
+async function adjustBalance(id){
+  const a=accMap()[id];if(!a)return;
+  const cur=balanceOf(id);
+  const input=prompt(`Поточний баланс: ${fmt(cur,a.currency)}\nВведи правильний баланс:`,String(cur));
+  if(input==null)return;
+  const target=num(input);
+  if(!Number.isFinite(target))return;
+  const delta=Math.round((target-cur)*100)/100;
+  if(delta===0){toast('Без змін');return;}
+  const row={type:delta>0?'income':'expense',amount:Math.abs(delta),account_id:id,to_account_id:null,to_amount:null,category_id:null,occurred_at:new Date().toISOString(),note:'Коригування балансу',tags:[]};
+  const{data,error}=await sb.from('transactions').insert(row).select().single();
+  if(error){toast(error.message,true);return;}
+  D.txs.unshift(data);
+  syncCache();
+  renderAcctSheet();
+  toast('Баланс скориговано');
+}
 function openAccount(a){
-  if(a)acctSheet={id:a.id,name:a.name,icon:a.icon||'💳',type:a.type==='regular'?'card':a.type,currency:a.currency,initial:String(a.initial??0),current:String(balanceOf(a.id)),credit_limit:String(a.credit_limit??0),due_date:a.due_date||'',interest_rate:a.interest_rate!=null?String(a.interest_rate):'',stmt_day:a.stmt_day!=null?String(a.stmt_day):'',due_day:a.due_day!=null?String(a.due_day):'',min_payment:a.min_payment!=null?String(a.min_payment):'',in_networth:a.in_networth!==false,archived:!!a.archived};
+  if(a)acctSheet={id:a.id,name:a.name,icon:a.icon||'💳',type:a.type==='regular'?'card':a.type,currency:a.currency,initial:String(a.initial??0),credit_limit:String(a.credit_limit??0),due_date:a.due_date||'',interest_rate:a.interest_rate!=null?String(a.interest_rate):'',stmt_day:a.stmt_day!=null?String(a.stmt_day):'',due_day:a.due_day!=null?String(a.due_day):'',min_payment:a.min_payment!=null?String(a.min_payment):'',in_networth:a.in_networth!==false,archived:!!a.archived};
   else acctSheet={id:null,name:'',icon:'💳',type:'card',currency:'UAH',initial:'0',credit_limit:'0',due_date:'',interest_rate:'',stmt_day:'',due_day:'',min_payment:'',in_networth:true,archived:false};
   acctInit=JSON.stringify(acctSheet);renderAcctSheet();
 }
 function closeAcctSheet(){acctSheet=null;acctInit=null;const o=document.getElementById('aov');if(o)o.remove();}
-function snapshotAcct(){const g=id=>document.getElementById(id);if(g('acName'))acctSheet.name=g('acName').value;if(g('acInit'))acctSheet.initial=g('acInit').value;if(g('acCurrent'))acctSheet.current=g('acCurrent').value;if(g('acLimit'))acctSheet.credit_limit=g('acLimit').value;if(g('acDue'))acctSheet.due_date=g('acDue').value;if(g('acRate'))acctSheet.interest_rate=g('acRate').value;if(g('acStmt'))acctSheet.stmt_day=g('acStmt').value;if(g('acDueD'))acctSheet.due_day=g('acDueD').value;if(g('acMin'))acctSheet.min_payment=g('acMin').value;if(g('acNW'))acctSheet.in_networth=g('acNW').checked;if(g('acArch'))acctSheet.archived=g('acArch').checked;}
+function snapshotAcct(){const g=id=>document.getElementById(id);if(g('acName'))acctSheet.name=g('acName').value;if(g('acInit'))acctSheet.initial=g('acInit').value;if(g('acLimit'))acctSheet.credit_limit=g('acLimit').value;if(g('acDue'))acctSheet.due_date=g('acDue').value;if(g('acRate'))acctSheet.interest_rate=g('acRate').value;if(g('acStmt'))acctSheet.stmt_day=g('acStmt').value;if(g('acDueD'))acctSheet.due_day=g('acDueD').value;if(g('acMin'))acctSheet.min_payment=g('acMin').value;if(g('acNW'))acctSheet.in_networth=g('acNW').checked;if(g('acArch'))acctSheet.archived=g('acArch').checked;}
 function renderAcctSheet(){
   let o=document.getElementById('aov');if(o)o.remove();if(!acctSheet)return;
   const s=acctSheet;
@@ -853,8 +870,9 @@ function renderAcctSheet(){
     <div class="two mb"><div style="flex:0 0 70px"><label class="fld">Іконка</label><button type="button" id="acIconBtn" class="icobtn" style="width:52px;height:52px;font-size:26px" aria-label="Обрати іконку">${esc(s.icon)}</button></div><div><label class="fld">Назва</label><input id="acName" value="${esc(s.name)}" placeholder="Напр. Олеся / MONO"></div></div>
     <div id="acIconsWrap" style="display:none">${iconGrid(s.icon,'acIcons')}</div>
     <div class="two mb"><div><label class="fld">Тип</label><select id="acType">${ATYPES.map(t=>`<option value="${t[0]}" ${t[0]===s.type?'selected':''}>${t[1]}</option>`).join('')}</select></div><div><label class="fld">Валюта</label><select id="acCur">${CURS.map(c=>`<option value="${c}" ${c===s.currency?'selected':''}>${c}</option>`).join('')}</select></div></div>
-    ${s.id?`<div class="mb"><label class="fld">${s.type==='debt'?'Поточний баланс (＋ винні мені / − я винен)':'Поточний баланс'}</label><input id="acCurrent" class="money-in amount-in" style="font-size:28px;margin-bottom:0" type="text" inputmode="decimal" value="${esc(groupDigits(s.current))}"></div>
-    <div class="mb" style="font-size:12px;color:var(--muted)">Початковий баланс (при створенні рахунку): ${fmt(Number(s.initial)||0,s.currency)}</div>`
+    ${s.id?`<div class="sumcell mb"><div class="t">${s.type==='debt'?'Поточний баланс (＋ винні мені / − я винен)':'Поточний баланс'}</div><div class="v">${fmt(balanceOf(s.id),s.currency)}</div></div>
+    <button type="button" class="btn line block" id="acAdjust" style="margin-bottom:14px">Скоригувати баланс</button>
+    <div class="mb" style="font-size:12px;color:var(--muted);margin-top:-8px">Початковий баланс (при створенні рахунку): ${fmt(Number(s.initial)||0,s.currency)}</div>`
       :`<div class="mb"><label class="fld">${s.type==='debt'?'Баланс при створенні (＋ винні мені / − я винен)':'Початковий баланс'}</label><input id="acInit" class="money-in" type="text" inputmode="decimal" value="${esc(groupDigits(s.initial))}"></div>`}
     ${s.type==='credit'?`<div class="mb"><label class="fld">Кредитний ліміт</label><input id="acLimit" class="money-in" type="text" inputmode="decimal" value="${esc(groupDigits(s.credit_limit))}"></div>
     <div class="two mb"><div><label class="fld">Ставка %/рік</label><input id="acRate" type="number" inputmode="decimal" value="${esc(s.interest_rate)}" placeholder="напр. 35"></div><div><label class="fld">Мін. платіж %</label><input id="acMin" type="number" inputmode="decimal" value="${esc(s.min_payment)}" placeholder="напр. 5"></div></div>
@@ -871,6 +889,7 @@ function renderAcctSheet(){
   document.getElementById('acIconBtn').onclick=()=>{const w=document.getElementById('acIconsWrap');w.style.display=w.style.display==='none'?'':'none';};
   ov.querySelectorAll('#acIcons .icobtn').forEach(b=>b.onclick=()=>{acctSheet.icon=b.dataset.ico;const btn=document.getElementById('acIconBtn');if(btn)btn.textContent=b.dataset.ico;ov.querySelectorAll('#acIcons .icobtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');document.getElementById('acIconsWrap').style.display='none';});
   document.getElementById('acCur').onchange=e=>{acctSheet.currency=e.target.value;};
+  const adj=document.getElementById('acAdjust');if(adj)adj.onclick=()=>adjustBalance(acctSheet.id);
   document.getElementById('acSave').onclick=()=>{snapshotAcct();saveAccount();};
   const dl=document.getElementById('acDel');if(dl)dl.onclick=async()=>{const id=acctSheet.id;if(confirm('Видалити рахунок? Його операції лишаться без рахунку.')){closeAcctSheet();const{error}=await sb.from('accounts').delete().eq('id',id);if(error){toast(error.message,true);return;}D.accounts=D.accounts.filter(a=>a.id!==id);syncCache();renderApp();}};
   if(paintIcons)paintIcons();
@@ -878,9 +897,7 @@ function renderAcctSheet(){
 }
 async function saveAccount(){
   const s=acctSheet;if(!s.name.trim())return;
-  // "Поточний баланс" редагується напряму — перераховуємо initial так, щоб initial + сума операцій = введений поточний баланс.
-  const initial=s.id?Math.round(((num(s.current)||0)-computeBalance(0,D.txs,s.id))*100)/100:(num(s.initial)||0);
-  const row={name:s.name.trim(),icon:(s.icon||'💳').trim()||'💳',type:s.type,currency:s.currency,initial,credit_limit:num(s.credit_limit)||0,due_date:s.type==='debt'&&s.due_date?s.due_date:null,interest_rate:(s.type==='debt'||s.type==='credit')&&num(s.interest_rate)?num(s.interest_rate):null,stmt_day:s.type==='credit'&&parseInt(s.stmt_day)?Math.min(31,Math.max(1,parseInt(s.stmt_day))):null,due_day:s.type==='credit'&&parseInt(s.due_day)?Math.min(31,Math.max(1,parseInt(s.due_day))):null,min_payment:s.type==='credit'&&num(s.min_payment)?num(s.min_payment):null,in_networth:!!s.in_networth,archived:!!s.archived};
+  const row={name:s.name.trim(),icon:(s.icon||'💳').trim()||'💳',type:s.type,currency:s.currency,initial:num(s.initial)||0,credit_limit:num(s.credit_limit)||0,due_date:s.type==='debt'&&s.due_date?s.due_date:null,interest_rate:(s.type==='debt'||s.type==='credit')&&num(s.interest_rate)?num(s.interest_rate):null,stmt_day:s.type==='credit'&&parseInt(s.stmt_day)?Math.min(31,Math.max(1,parseInt(s.stmt_day))):null,due_day:s.type==='credit'&&parseInt(s.due_day)?Math.min(31,Math.max(1,parseInt(s.due_day))):null,min_payment:s.type==='credit'&&num(s.min_payment)?num(s.min_payment):null,in_networth:!!s.in_networth,archived:!!s.archived};
   let res=s.id?await sb.from('accounts').update(row).eq('id',s.id).select().single():await sb.from('accounts').insert({...row,sort:nextSort(D.accounts)}).select().single();
   if(res.error){toast(res.error.message,true);return;}
   if(s.id){const i=D.accounts.findIndex(a=>a.id===s.id);if(i>-1)D.accounts[i]=res.data;}else D.accounts.push(res.data);
