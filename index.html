@@ -228,6 +228,7 @@
 <div class="wrap" id="root"><div class="loading">Завантаження…</div></div>
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { curSign, fmt, fmt0, num, advanceDate, toUAH as toUAHPure, computeBalance, computeBalanceAt } from './finance-utils.js';
 let LU={}, mkIcon=null;
 try{ const L=await import('https://esm.sh/lucide@1.32.0'); mkIcon=L.createElement; LU=L; }catch(e){ console.warn('lucide off',e); }
 
@@ -277,9 +278,6 @@ const ATYPE_L=Object.fromEntries(ATYPES);
 const CURS=['UAH','USD','EUR'];
 const AGROUPS=[['cash','Готівкові рахунки'],['card','Карткові рахунки'],['savings','Заощадження'],['credit','Кредитні картки'],['debt','Борги/Позики']];
 
-const curSign=c=>c==='USD'?'$':c==='EUR'?'€':'грн';
-const fmt=(n,c='UAH')=>{const v=Math.round((n+Number.EPSILON)*100)/100;const f=v%1===0?0:2;return new Intl.NumberFormat('uk-UA',{minimumFractionDigits:f,maximumFractionDigits:2}).format(v)+' '+curSign(c);};
-const fmt0=(n,c='UAH')=>new Intl.NumberFormat('uk-UA',{maximumFractionDigits:0}).format(Math.round(n))+' '+curSign(c);
 const pad=x=>String(x).padStart(2,'0');
 const MON=['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
 const MONN=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
@@ -294,11 +292,9 @@ const fmtTs=iso=>{const d=new Date(iso);return `${pad(d.getDate())}.${pad(d.getM
 const normSheet=s=>{const x={...s};delete x.catsExpanded;return JSON.stringify(x);};
 const inputToISO=s=>new Date(s).toISOString();
 const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const num=s=>parseFloat(String(s).replace(',','.'));
 const todayDate=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;};
 const REPEATS=[['none','Одноразово'],['daily','Щодня'],['weekly','Щотижня'],['monthly','Щомісяця'],['yearly','Щороку']];
 const REPL=Object.fromEntries(REPEATS);
-function advanceDate(ds,rep){const[y,m,d]=ds.split('-').map(Number);const dt=new Date(y,m-1,d);if(rep==='daily')dt.setDate(dt.getDate()+1);else if(rep==='weekly')dt.setDate(dt.getDate()+7);else if(rep==='monthly')dt.setMonth(dt.getMonth()+1);else if(rep==='yearly')dt.setFullYear(dt.getFullYear()+1);return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;}
 
 const root=document.getElementById('root');
 let sb=null,user=null;
@@ -326,10 +322,10 @@ const tagMap=()=>Object.fromEntries(D.tags.map(t=>[t.id,t]));
 const usdRate=()=>Number(D.settings?.usd_rate)||41;
 const eurRate=()=>Number(D.settings?.eur_rate)||45;
 const accCur=id=>accMap()[id]?.currency||'UAH';
-const toUAH=(n,c)=>c==='USD'?n*usdRate():c==='EUR'?n*eurRate():n;
-function balanceOf(id){const a=accMap()[id];if(!a)return 0;let b=Number(a.initial)||0;for(const t of D.txs){const am=Number(t.amount);if(t.type==='income'&&t.account_id===id)b+=am;else if(t.type==='expense'&&t.account_id===id)b-=am;else if(t.type==='transfer'){if(t.account_id===id)b-=am;if(t.to_account_id===id)b+=(t.to_amount!=null?Number(t.to_amount):am);}}return b;}
+const toUAH=(n,c)=>toUAHPure(n,c,usdRate(),eurRate());
+function balanceOf(id){const a=accMap()[id];if(!a)return 0;return computeBalance(a.initial,D.txs,id);}
 const netWorthUAH=()=>D.accounts.filter(a=>a.in_networth!==false&&!a.archived).reduce((s,a)=>s+toUAH(balanceOf(a.id),a.currency),0);
-function balanceAt(id,endISO){const a=accMap()[id];if(!a)return 0;let b=Number(a.initial)||0;for(const t of D.txs){if(t.occurred_at>endISO)continue;const am=Number(t.amount);if(t.type==='income'&&t.account_id===id)b+=am;else if(t.type==='expense'&&t.account_id===id)b-=am;else if(t.type==='transfer'){if(t.account_id===id)b-=am;if(t.to_account_id===id)b+=(t.to_amount!=null?Number(t.to_amount):am);}}return b;}
+function balanceAt(id,endISO){const a=accMap()[id];if(!a)return 0;return computeBalanceAt(a.initial,D.txs,id,endISO);}
 const netWorthAt=endISO=>D.accounts.filter(a=>a.in_networth!==false&&!a.archived).reduce((s,a)=>s+toUAH(balanceAt(a.id,endISO),a.currency),0);
 const fmtDate=ds=>{const d=new Date(ds+'T00:00:00');return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;};
 const holdings=cur=>D.accounts.filter(a=>a.currency===cur).reduce((s,a)=>s+balanceOf(a.id),0);

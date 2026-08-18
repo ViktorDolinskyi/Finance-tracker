@@ -1,5 +1,5 @@
-const CACHE='fin-shell-v1';
-const SHELL=['./','./index.html','./favicon.svg','./manifest.json'];
+const CACHE='fin-shell-v2';
+const SHELL=['./','./index.html','./favicon.svg','./manifest.json','./finance-utils.js'];
 
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()));
