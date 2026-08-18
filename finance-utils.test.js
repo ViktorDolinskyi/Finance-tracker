@@ -1,7 +1,7 @@
 // Запуск: node --test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { curSign, fmt, num, advanceDate, toUAH, computeBalance, computeBalanceAt } from './finance-utils.js';
+import { curSign, fmt, num, advanceDate, toUAH, computeBalance, computeBalanceAt, esc } from './finance-utils.js';
 
 test('curSign', () => {
   assert.equal(curSign('USD'), '$');
@@ -10,10 +10,23 @@ test('curSign', () => {
   assert.equal(curSign(undefined), 'грн');
 });
 
+test('esc escapes HTML-significant characters to prevent XSS', () => {
+  assert.equal(esc('<script>alert(1)</script>'), '&lt;script&gt;alert(1)&lt;/script&gt;');
+  assert.equal(esc('Tom & Jerry'), 'Tom &amp; Jerry');
+  assert.equal(esc('"onmouseover="alert(1)'), '&quot;onmouseover=&quot;alert(1)');
+  assert.equal(esc(null), '');
+  assert.equal(esc(undefined), '');
+  assert.equal(esc(123), '123'); // не-рядкові значення приводяться до String
+  assert.equal(esc('нема спецсимволів'), 'нема спецсимволів');
+});
+
 test('num parses both comma and dot as decimal separator', () => {
   assert.equal(num('1234,56'), 1234.56);
   assert.equal(num('1234.56'), 1234.56);
   assert.equal(num('100'), 100);
+  assert.ok(Number.isNaN(num('')));
+  assert.ok(Number.isNaN(num('abc')));
+  assert.equal(num('-50,25'), -50.25);
 });
 
 test('fmt shows 0 decimals for whole amounts, 2 for fractional', () => {

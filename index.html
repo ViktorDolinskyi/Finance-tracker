@@ -229,7 +229,7 @@
 <div class="wrap" id="root"><div class="loading">Завантаження…</div></div>
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { curSign, fmt, fmt0, num, advanceDate, toUAH as toUAHPure, computeBalance, computeBalanceAt } from './finance-utils.js';
+import { curSign, fmt, fmt0, num, advanceDate, toUAH as toUAHPure, computeBalance, computeBalanceAt, esc } from './finance-utils.js';
 let LU={}, mkIcon=null;
 try{ const L=await import('https://esm.sh/lucide@1.32.0'); mkIcon=L.createElement; LU=L; }catch(e){ console.warn('lucide off',e); }
 
@@ -292,7 +292,6 @@ const dayOf=v=>{const d=new Date(v);return `${d.getFullYear()}-${pad(d.getMonth(
 const fmtTs=iso=>{const d=new Date(iso);return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;};
 const normSheet=s=>{const x={...s};delete x.catsExpanded;return JSON.stringify(x);};
 const inputToISO=s=>new Date(s).toISOString();
-const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const todayDate=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;};
 const REPEATS=[['none','Одноразово'],['daily','Щодня'],['weekly','Щотижня'],['monthly','Щомісяця'],['yearly','Щороку']];
 const REPL=Object.fromEntries(REPEATS);
