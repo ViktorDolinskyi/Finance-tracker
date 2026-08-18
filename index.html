@@ -506,7 +506,7 @@ function renderApp(){
   const body=view==='home'?viewHome():view==='ops'?viewOps():view==='plan'?viewPlan():view==='report'?viewReport():viewSettings();
   const tabs=[['home','Огляд','Wallet'],['ops','Операції','ReceiptText'],['plan','План','CalendarClock'],['report','Звіт','ChartPie'],['settings','Ще','Settings']];
   root.innerHTML=`<div class="view-anim">${body}</div>
-    <button class="fab" id="fab"><span data-icon="Plus"></span></button>
+    <button class="fab" id="fab" aria-label="Додати операцію"><span data-icon="Plus"></span></button>
     <div class="tabbar">${tabs.map(t=>`<button data-view="${t[0]}" class="${view===t[0]?'on':''}"><span data-icon="${t[2]}"></span>${t[1]}</button>`).join('')}</div>`;
   root.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{view=b.dataset.view;renderApp();});
   document.getElementById('fab').onclick=()=>{view==='plan'?openPlan():openSheet();};
@@ -522,10 +522,10 @@ function viewPlan(){
     const ic=p.type==='transfer'?`<span class="ic" style="--c:var(--transfer)" data-icon="ArrowLeftRight"></span>`:tile(cm[p.category_id]||{icon:'•',color:'#8A8F9E'});
     const cls=p.type==='income'?'pos':p.type==='expense'?'neg':'tr';const pfx=p.type==='income'?'+':p.type==='expense'?'−':'';
     const d=new Date(p.next_date+'T00:00:00');const dl=`${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;const acc=am[p.account_id];
-    return `<div class="planrow">${ic}<div class="nm" data-plan="${p.id}" style="cursor:pointer"><div class="t">${esc(title)}</div><div class="s">${REPL[p.repeat]||'Одноразово'} · <span style="${over?'color:var(--expense);font-weight:600':''}">${dl}</span>${acc?' · '+esc(acc.name):''}</div></div><div class="right"><div class="amt ${cls}">${pfx}${fmt(Number(p.amount),accCur(p.account_id))}</div><button class="post" data-post="${p.id}">Провести</button></div><button class="del" data-delplan="${p.id}"><span data-icon="Trash2"></span></button></div>`;
+    return `<div class="planrow">${ic}<div class="nm" data-plan="${p.id}" style="cursor:pointer"><div class="t">${esc(title)}</div><div class="s">${REPL[p.repeat]||'Одноразово'} · <span style="${over?'color:var(--expense);font-weight:600':''}">${dl}</span>${acc?' · '+esc(acc.name):''}</div></div><div class="right"><div class="amt ${cls}">${pfx}${fmt(Number(p.amount),accCur(p.account_id))}</div><button class="post" data-post="${p.id}">Провести</button></div><button class="del" data-delplan="${p.id}" aria-label="Видалити план"><span data-icon="Trash2"></span></button></div>`;
   }).join('');
   return `
-  <div class="hdr"><h1>Планові</h1><div class="hdr-actions"><button class="iconbtn" id="themeBtn"><span data-icon="${curTheme()==='dark'?'Sun':'Moon'}"></span></button></div></div>
+  <div class="hdr"><h1>Планові</h1><div class="hdr-actions"><button class="iconbtn" id="themeBtn" aria-label="Перемкнути тему"><span data-icon="${curTheme()==='dark'?'Sun':'Moon'}"></span></button></div></div>
   ${list.length?`<div class="card" style="padding:4px 16px">${rows}</div>`:'<div class="empty"><strong>Немає планових операцій</strong>Натисни + щоб запланувати регулярний платіж чи дохід.</div>'}
   <div style="font-size:12px;color:var(--muted);margin-top:12px;padding:0 4px;line-height:1.5">«Провести» створює реальну операцію за вказану дату. Для повторюваних наступна дата переноситься автоматично. Прострочені позначені червоним.</div>`;
 }
@@ -549,7 +549,7 @@ function viewHome(){
   const tplCard=D.templates.length?`<div class="card"><h2>Шаблони</h2><div class="chips">${D.templates.map(t=>{const c=cm0[t.category_id];const col=t.type==='income'?'var(--income)':t.type==='transfer'?'var(--transfer)':(c&&c.color||'var(--expense)');return `<button class="chip" data-tpl="${t.id}"><span class="dot" style="background:${col}"></span>${esc(t.name)}</button>`;}).join('')}</div></div>`:'';
   return `
   <div class="hdr"><div><h1>Огляд</h1><div class="sub">${user?esc(user.email):''}</div></div>
-    <div class="hdr-actions"><button class="iconbtn" id="themeBtn"><span data-icon="${curTheme()==='dark'?'Sun':'Moon'}"></span></button></div></div>
+    <div class="hdr-actions"><button class="iconbtn" id="themeBtn" aria-label="Перемкнути тему"><span data-icon="${curTheme()==='dark'?'Sun':'Moon'}"></span></button></div></div>
   <div class="hero"><div class="lbl">Чистий капітал</div><div class="bal">${fmt0(netWorthUAH())}</div>
     ${fhold.length?`<div class="usd">у т.ч. ${fhold.join(' · ')} · курс ${fmt0(usdRate())}/$ · ${fmt0(eurRate())}/€</div>`:''}
     <div class="row">
@@ -562,8 +562,8 @@ function viewHome(){
 
 function viewOps(){
   const am=accMap(),cm=catMap(),tm=tagMap();
-  const hdr=`<div class="hdr"><h1>Операції</h1><div class="hdr-actions"><button class="iconbtn" id="themeBtn"><span data-icon="${curTheme()==='dark'?'Sun':'Moon'}"></span></button></div></div>`;
-  const nav=`<div class="monthnav"><button data-m="-1"><span data-icon="ChevronLeft"></span></button><div class="lbl">${monthTitle()}</div><button data-m="1"><span data-icon="ChevronRight"></span></button></div>`;
+  const hdr=`<div class="hdr"><h1>Операції</h1><div class="hdr-actions"><button class="iconbtn" id="themeBtn" aria-label="Перемкнути тему"><span data-icon="${curTheme()==='dark'?'Sun':'Moon'}"></span></button></div></div>`;
+  const nav=`<div class="monthnav"><button data-m="-1" aria-label="Попередній місяць"><span data-icon="ChevronLeft"></span></button><div class="lbl">${monthTitle()}</div><button data-m="1" aria-label="Наступний місяць"><span data-icon="ChevronRight"></span></button></div>`;
   const toggle=`<div class="vtoggle"><button class="${opsMode==='list'?'on':''}" data-opsmode="list">Список</button><button class="${opsMode==='calendar'?'on':''}" data-opsmode="calendar">Календар</button></div>`;
   const rowHtml=(t)=>{const a=Number(t.amount);
     if(t.type==='transfer'){const f=am[t.account_id],to=am[t.to_account_id];return `<div class="row-item" data-tx="${t.id}"><span class="ic" style="--c:var(--transfer)" data-icon="ArrowLeftRight"></span><div class="nm"><div class="t">Переказ</div><div class="s">${esc(f?f.name:'?')} → ${esc(to?to.name:'?')}</div></div><div class="amt tr">${fmt(a,f?f.currency:'UAH')}</div></div>`;}
@@ -613,8 +613,8 @@ function viewReport(){
   const nwSeries=[...ms].sort().slice(-6).map(k=>({k,v:netWorthAt(k+'-31T23:59:59')}));
   const nwMax=Math.max(1,...nwSeries.map(s=>Math.max(0,s.v)));
   return `
-  <div class="hdr"><h1>Звіт</h1><div class="hdr-actions"><button class="iconbtn" id="themeBtn"><span data-icon="${curTheme()==='dark'?'Sun':'Moon'}"></span></button></div></div>
-  <div class="monthnav"><button data-m="-1"><span data-icon="ChevronLeft"></span></button><div class="lbl">${monthTitle()}</div><button data-m="1"><span data-icon="ChevronRight"></span></button></div>
+  <div class="hdr"><h1>Звіт</h1><div class="hdr-actions"><button class="iconbtn" id="themeBtn" aria-label="Перемкнути тему"><span data-icon="${curTheme()==='dark'?'Sun':'Moon'}"></span></button></div></div>
+  <div class="monthnav"><button data-m="-1" aria-label="Попередній місяць"><span data-icon="ChevronLeft"></span></button><div class="lbl">${monthTitle()}</div><button data-m="1" aria-label="Наступний місяць"><span data-icon="ChevronRight"></span></button></div>
   <div class="card"><h2>Зведення за місяць</h2>
     <div class="sumgrid">
       <div class="sumcell"><div class="t">Доходи</div><div class="v pos">${fmt0(inc)}</div></div>
@@ -668,11 +668,11 @@ function viewSettings(){
   <button class="btn line block" id="catAddBtn" style="margin-top:10px">+ Додати категорію</button>
 
   <div class="seclbl">Мітки</div>
-  <div class="card" style="padding:6px 16px">${D.tags.map(t=>`<div class="row-item"><span class="ic sm" style="--c:${t.color}"></span><div class="nm"><div class="t">${esc(t.name)}</div></div><button class="del" data-deltag="${t.id}"><span data-icon="Trash2"></span></button></div>`).join('')||'<div class="empty">Міток ще немає.</div>'}</div>
+  <div class="card" style="padding:6px 16px">${D.tags.map(t=>`<div class="row-item"><span class="ic sm" style="--c:${t.color}"></span><div class="nm"><div class="t">${esc(t.name)}</div></div><button class="del" data-deltag="${t.id}" aria-label="Видалити мітку"><span data-icon="Trash2"></span></button></div>`).join('')||'<div class="empty">Міток ще немає.</div>'}</div>
   <div class="addform"><input id="tagName" placeholder="Назва мітки"><button class="btn" id="tagAdd">+</button></div>
 
   <div class="seclbl">Шаблони</div>
-  <div class="card" style="padding:6px 16px">${D.templates.map(t=>`<div class="row-item"><div class="nm"><div class="t">${esc(t.name)}</div><div class="s">${t.type==='income'?'Надходження':t.type==='transfer'?'Переказ':'Видаток'}${t.amount?' · '+fmt0(Number(t.amount)):''}</div></div><button class="del" data-deltpl="${t.id}"><span data-icon="Trash2"></span></button></div>`).join('')||'<div class="empty">Шаблонів ще немає. Створи їх кнопкою «★ Зберегти як шаблон» у формі операції.</div>'}</div>
+  <div class="card" style="padding:6px 16px">${D.templates.map(t=>`<div class="row-item"><div class="nm"><div class="t">${esc(t.name)}</div><div class="s">${t.type==='income'?'Надходження':t.type==='transfer'?'Переказ':'Видаток'}${t.amount?' · '+fmt0(Number(t.amount)):''}</div></div><button class="del" data-deltpl="${t.id}" aria-label="Видалити шаблон"><span data-icon="Trash2"></span></button></div>`).join('')||'<div class="empty">Шаблонів ще немає. Створи їх кнопкою «★ Зберегти як шаблон» у формі операції.</div>'}</div>
 
   <div class="seclbl">Дані</div>
   <div class="card"><button class="btn line block" id="exportBtn"><span data-icon="Download" style="vertical-align:-3px"></span> Експорт у CSV</button>
@@ -755,7 +755,7 @@ function renderCatSheet(){
   let o=document.getElementById('cov');if(o)o.remove();if(!catSheet)return;
   const s=catSheet;
   const html=`<div class="overlay" id="cov"><div class="sheet"><div class="sheet-grip"></div>
-    <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="ccClose" style="width:34px;height:34px"><span data-icon="X"></span></button></div>
+    <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="ccClose" style="width:34px;height:34px" aria-label="Закрити"><span data-icon="X"></span></button></div>
     <div class="mb"><label class="fld">Назва</label><input id="ccName" value="${esc(s.name)}" placeholder="Назва категорії"></div>
     <label class="fld">Іконка</label>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px">${tile({icon:s.icon,lucide:s.lucide,color:s.color})}<span style="font-size:12px;color:var(--muted)">Обери іконку нижче</span></div>
@@ -802,7 +802,7 @@ async function openRatesChart(days){
     const last=a=>a.length?a[a.length-1].toFixed(2):'—';const first=a=>a.length?a[0]:0;
     const delta=a=>{if(a.length<2)return '';const d=a[a.length-1]-first(a);return ` <span style="color:${d>=0?'var(--income)':'var(--expense)'}">${d>=0?'▲':'▼'}${Math.abs(d).toFixed(2)}</span>`;};
     document.getElementById('rov').querySelector('.sheet').innerHTML=`<div class="sheet-grip"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h2 style="font-family:var(--display);font-size:17px;font-weight:700">Динаміка курсу · ${days===7?'тиждень':'місяць'}</h2><button class="iconbtn" id="rClose" style="width:34px;height:34px"><span data-icon="X"></span></button></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h2 style="font-family:var(--display);font-size:17px;font-weight:700">Динаміка курсу · ${days===7?'тиждень':'місяць'}</h2><button class="iconbtn" id="rClose" style="width:34px;height:34px" aria-label="Закрити"><span data-icon="X"></span></button></div>
       ${svg}
       <div class="chips" style="margin-top:12px"><span class="chip"><span class="dot" style="background:var(--accent)"></span>USD ${last(u)} ₴${delta(u)}</span><span class="chip"><span class="dot" style="background:var(--muted)"></span>EUR ${last(e)} ₴${delta(e)}</span></div>
       <div style="font-size:11px;color:var(--muted);margin-top:10px">Джерело: Національний банк України</div>`;
@@ -825,9 +825,9 @@ function renderAcctSheet(){
   let o=document.getElementById('aov');if(o)o.remove();if(!acctSheet)return;
   const s=acctSheet;
   const html=`<div class="overlay" id="aov"><div class="sheet"><div class="sheet-grip"></div>
-    <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="acClose" style="width:34px;height:34px"><span data-icon="X"></span></button></div>
+    <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="acClose" style="width:34px;height:34px" aria-label="Закрити"><span data-icon="X"></span></button></div>
     ${s.id?`<div class="sumcell mb"><div class="t">Поточний баланс</div><div class="v">${fmt(balanceOf(s.id),s.currency)}</div></div>`:''}
-    <div class="two mb"><div style="flex:0 0 70px"><label class="fld">Іконка</label><button type="button" id="acIconBtn" class="icobtn" style="width:52px;height:52px;font-size:26px">${esc(s.icon)}</button></div><div><label class="fld">Назва</label><input id="acName" value="${esc(s.name)}" placeholder="Напр. Олеся / MONO"></div></div>
+    <div class="two mb"><div style="flex:0 0 70px"><label class="fld">Іконка</label><button type="button" id="acIconBtn" class="icobtn" style="width:52px;height:52px;font-size:26px" aria-label="Обрати іконку">${esc(s.icon)}</button></div><div><label class="fld">Назва</label><input id="acName" value="${esc(s.name)}" placeholder="Напр. Олеся / MONO"></div></div>
     <div id="acIconsWrap" style="display:none">${iconGrid(s.icon,'acIcons')}</div>
     <div class="two mb"><div><label class="fld">Тип</label><select id="acType">${ATYPES.map(t=>`<option value="${t[0]}" ${t[0]===s.type?'selected':''}>${t[1]}</option>`).join('')}</select></div><div><label class="fld">Валюта</label><select id="acCur">${CURS.map(c=>`<option value="${c}" ${c===s.currency?'selected':''}>${c}</option>`).join('')}</select></div></div>
     <div class="mb"><label class="fld">${s.type==='debt'?'Баланс при створенні (＋ винні мені / − я винен)':'Початковий баланс'}</label><input id="acInit" type="number" inputmode="decimal" value="${esc(s.initial)}"></div>
@@ -881,7 +881,7 @@ function renderSheet(){
   const tagsBlock=D.tags.length?`<div class="mb"><label class="fld">Мітки</label><div class="chips" id="shTags">${D.tags.map(t=>`<button type="button" class="chip ${sheet.tags.includes(t.id)?'on':''}" data-tag="${t.id}"><span class="dot" style="background:${t.color}"></span>${esc(t.name)}</button>`).join('')}</div></div>`:'';
   const html=`<div class="overlay" id="ov"><div class="sheet">
     <div class="sheet-grip"></div>
-    <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="shClose" style="width:34px;height:34px"><span data-icon="X"></span></button></div>
+    <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="shClose" style="width:34px;height:34px" aria-label="Закрити"><span data-icon="X"></span></button></div>
     <div class="seg">
       <button data-t="expense" class="${sheet.type==='expense'?'on exp':''}">Витрата</button>
       <button data-t="income" class="${sheet.type==='income'?'on inc':''}">Дохід</button>
