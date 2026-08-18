@@ -46,6 +46,9 @@ export function advanceDate(ds, rep) {
 
 export const toUAH = (n, c, usdRate, eurRate) => c === 'USD' ? n * usdRate : c === 'EUR' ? n * eurRate : n;
 
+// Зворотне до toUAH: скільки це в іноземній валюті, маючи суму в грн.
+export const fromUAH = (n, c, usdRate, eurRate) => c === 'USD' ? n / usdRate : c === 'EUR' ? n / eurRate : n;
+
 // initial: рахунок.initial; txs: усі транзакції (уже відфільтровані по даті, якщо потрібно); accountId: чий баланс рахуємо.
 export function computeBalance(initial, txs, accountId) {
   let b = Number(initial) || 0;

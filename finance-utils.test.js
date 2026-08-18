@@ -1,7 +1,7 @@
 // Запуск: node --test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { curSign, fmt, num, advanceDate, toUAH, computeBalance, computeBalanceAt, esc, groupDigits, ungroupDigits } from './finance-utils.js';
+import { curSign, fmt, num, advanceDate, toUAH, fromUAH, computeBalance, computeBalanceAt, esc, groupDigits, ungroupDigits } from './finance-utils.js';
 
 test('curSign', () => {
   assert.equal(curSign('USD'), '$');
@@ -87,4 +87,11 @@ test('groupDigits inserts NBSP thousands separators, ungroupDigits reverses it',
   assert.equal(ungroupDigits('1' + ' ' + '234' + ' ' + '567'), '1234567');
   assert.equal(ungroupDigits('1 234 567'), '1234567'); // звичайний пробіл теж прибирається
   assert.equal(num(groupDigits('1234567,89')), 1234567.89); // round-trip через num()
+});
+
+test('fromUAH is the inverse of toUAH', () => {
+  assert.equal(fromUAH(100, 'UAH', 41, 45), 100);
+  assert.equal(fromUAH(410, 'USD', 41, 45), 10);
+  assert.equal(fromUAH(450, 'EUR', 41, 45), 10);
+  assert.equal(toUAH(fromUAH(1000, 'USD', 41, 45), 'USD', 41, 45), 1000);
 });

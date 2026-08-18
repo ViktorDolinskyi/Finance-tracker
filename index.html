@@ -183,6 +183,9 @@
   .vtoggle{display:flex;gap:4px;background:var(--surface2);border-radius:13px;padding:4px;margin-bottom:14px}
   .vtoggle button{flex:1;border:none;background:transparent;color:var(--muted);font-family:var(--display);font-size:13px;font-weight:600;padding:8px;border-radius:10px;cursor:pointer}
   .vtoggle button.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+  .nwcur{display:flex;gap:2px;background:var(--surface2);border-radius:10px;padding:3px;flex:none}
+  .nwcur button{border:none;background:none;cursor:pointer;padding:6px 12px;border-radius:7px;font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--muted);min-height:36px}
+  .nwcur button.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
   .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:4px 0}
   .cal .wd{text-align:center;font-size:10px;color:var(--muted);padding:2px 0;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
   .cal .cell{aspect-ratio:1;border-radius:11px;border:1px solid var(--line-soft);display:flex;flex-direction:column;align-items:center;padding:4px 1px;cursor:pointer;background:var(--surface2);overflow:hidden}
@@ -229,7 +232,7 @@
 <div class="wrap" id="root"><div class="loading">Завантаження…</div></div>
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { curSign, fmt, fmt0, num, advanceDate, toUAH as toUAHPure, computeBalance, computeBalanceAt, esc, groupDigits, ungroupDigits } from './finance-utils.js';
+import { curSign, fmt, fmt0, num, advanceDate, toUAH as toUAHPure, fromUAH as fromUAHPure, computeBalance, computeBalanceAt, esc, groupDigits, ungroupDigits } from './finance-utils.js';
 let LU={}, mkIcon=null;
 try{ const L=await import('https://esm.sh/lucide@1.32.0'); mkIcon=L.createElement; LU=L; }catch(e){ console.warn('lucide off',e); }
 
@@ -300,6 +303,7 @@ const root=document.getElementById('root');
 let sb=null,user=null;
 let D={accounts:[],categories:[],txs:[],settings:{usd_rate:41,eur_rate:45},tags:[],planned:[],templates:[]};
 let view='home', month=curMonth(), sheet=null, catKind='expense', seededOnce=false, tagFilter=null, acctSheet=null, settingsShowArchived=false, opsMode='list', dayFilter=null, sheetInit=null, acctInit=null, catSheet=null, catInit=null, settingsCatsExpanded=false;
+let netWorthCur=(()=>{try{return localStorage.getItem('netWorthCur')||'UAH';}catch{return 'UAH';}})();
 const getCfg=()=>{try{return JSON.parse(localStorage.getItem('cfg')||'null')}catch{return null}};
 const setCfg=c=>localStorage.setItem('cfg',JSON.stringify(c));
 const curTheme=()=>document.documentElement.getAttribute('data-theme')||'light';
@@ -335,6 +339,7 @@ const usdRate=()=>Number(D.settings?.usd_rate)||41;
 const eurRate=()=>Number(D.settings?.eur_rate)||45;
 const accCur=id=>accMap()[id]?.currency||'UAH';
 const toUAH=(n,c)=>toUAHPure(n,c,usdRate(),eurRate());
+const fromUAH=(n,c)=>fromUAHPure(n,c,usdRate(),eurRate());
 function balanceOf(id){const a=accMap()[id];if(!a)return 0;return computeBalance(a.initial,D.txs,id);}
 const netWorthUAH=()=>D.accounts.filter(a=>a.in_networth!==false&&!a.archived).reduce((s,a)=>s+toUAH(balanceOf(a.id),a.currency),0);
 function balanceAt(id,endISO){const a=accMap()[id];if(!a)return 0;return computeBalanceAt(a.initial,D.txs,id,endISO);}
@@ -560,6 +565,9 @@ function viewHome(){
   const exp=mt.filter(t=>t.type==='expense').reduce((s,t)=>s+toUAH(Number(t.amount),accCur(t.account_id)),0);
   const usd=holdings('USD'), eur=holdings('EUR');
   const fhold=[]; if(usd)fhold.push(fmt(usd,'USD')); if(eur)fhold.push(fmt(eur,'EUR'));
+  const usedCurs=[...new Set(D.accounts.map(a=>a.currency))];
+  if(!usedCurs.includes('UAH'))usedCurs.unshift('UAH');
+  if(!usedCurs.includes(netWorthCur))netWorthCur='UAH';
   const dacc=D.accounts.filter(a=>a.type==='debt'&&!a.archived);
   const owedToMe=dacc.reduce((s,a)=>{const b=balanceOf(a.id);return s+(b>0?toUAH(b,a.currency):0);},0);
   const iOwe=dacc.reduce((s,a)=>{const b=balanceOf(a.id);return s+(b<0?toUAH(-b,a.currency):0);},0);
@@ -574,7 +582,9 @@ function viewHome(){
   return `
   <div class="hdr"><div><h1>Огляд</h1><div class="sub">${user?esc(user.email):''}</div></div>
     <div class="hdr-actions"><button class="iconbtn" id="themeBtn" aria-label="Перемкнути тему"><span data-icon="${curTheme()==='dark'?'Sun':'Moon'}"></span></button></div></div>
-  <div class="hero"><div class="lbl">Чистий капітал</div><div class="bal">${fmt0(netWorthUAH())}</div>
+  <div class="hero"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="lbl">Чистий капітал</div>
+    ${usedCurs.length>1?`<div class="nwcur">${usedCurs.map(c=>`<button class="${c===netWorthCur?'on':''}" data-nwcur="${c}">${curSign(c)}</button>`).join('')}</div>`:''}</div>
+    <div class="bal">${fmt0(fromUAH(netWorthUAH(),netWorthCur),netWorthCur)}</div>
     ${fhold.length?`<div class="usd">у т.ч. ${fhold.join(' · ')} · курс ${fmt0(usdRate())}/$ · ${fmt0(eurRate())}/€</div>`:''}
     <div class="row">
       <div class="pill"><div class="t"><span data-icon="ArrowDownLeft"></span>Дохід / міс</div><div class="v pos">${fmt0(inc)}</div></div>
@@ -712,6 +722,7 @@ function bindView(){
   const tb=document.getElementById('themeBtn');
   if(tb)tb.onclick=()=>{applyTheme(curTheme()==='dark'?'light':'dark');renderApp();};
   document.querySelectorAll('.monthnav button').forEach(b=>b.onclick=()=>shiftMonth(Number(b.dataset.m)));
+  document.querySelectorAll('[data-nwcur]').forEach(b=>b.onclick=()=>{netWorthCur=b.dataset.nwcur;try{localStorage.setItem('netWorthCur',netWorthCur);}catch{}renderApp();});
   document.querySelectorAll('[data-tx]').forEach(el=>el.onclick=()=>{const t=D.txs.find(x=>x.id===el.dataset.tx);if(t)openSheet(t);});
   document.querySelectorAll('[data-acct]').forEach(el=>el.onclick=()=>{const a=D.accounts.find(x=>x.id===el.dataset.acct);if(a)openAccount(a);});
   document.querySelectorAll('[data-tpl]').forEach(b=>b.onclick=()=>{const t=D.templates.find(x=>x.id===b.dataset.tpl);if(t)openTemplate(t);});
