@@ -847,8 +847,8 @@ function renderAcctSheet(){
     <div class="two mb"><div><label class="fld">Ставка %/рік</label><input id="acRate" type="number" inputmode="decimal" value="${esc(s.interest_rate)}" placeholder="напр. 35"></div><div><label class="fld">Мін. платіж %</label><input id="acMin" type="number" inputmode="decimal" value="${esc(s.min_payment)}" placeholder="напр. 5"></div></div>
     <div class="two mb"><div><label class="fld">День виписки</label><input id="acStmt" type="number" inputmode="numeric" min="1" max="31" value="${esc(s.stmt_day)}" placeholder="1–31"></div><div><label class="fld">День платежу</label><input id="acDueD" type="number" inputmode="numeric" min="1" max="31" value="${esc(s.due_day)}" placeholder="1–31"></div></div>`:''}
     ${s.type==='debt'?`<div class="two mb"><div><label class="fld">Дата повернення</label><input id="acDue" type="date" value="${esc(s.due_date)}"></div><div><label class="fld">Ставка %/рік</label><input id="acRate" type="number" inputmode="decimal" value="${esc(s.interest_rate)}" placeholder="необов'язково"></div></div>`:''}
-    <label class="chkrow"><input type="checkbox" id="acNW" ${s.in_networth?'checked':''}> Враховувати в «Чистому капіталі»</label>
-    ${s.id?`<label class="chkrow"><input type="checkbox" id="acArch" ${s.archived?'checked':''}> Архівний (сховати зі списку)</label>`:''}
+    <div class="swrow"><div class="lbl">Враховувати в «Чистому капіталі»</div><label class="switch"><input type="checkbox" id="acNW" ${s.in_networth?'checked':''}><span class="sl"></span></label></div>
+    ${s.id?`<div class="swrow"><div class="lbl">Архівний (сховати зі списку)</div><label class="switch"><input type="checkbox" id="acArch" ${s.archived?'checked':''}><span class="sl"></span></label></div>`:''}
     <button class="btn block" id="acSave" style="margin-top:14px">${s.id?'Зберегти':'Додати рахунок'}</button>
     ${s.id?`<button class="btn danger block" id="acDel" style="margin-top:8px">Видалити</button>`:''}
   </div></div>`;
