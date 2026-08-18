@@ -12,7 +12,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Фінанси">
-<link rel="manifest" href='data:application/manifest+json,{"name":"Фінанси","short_name":"Фінанси","start_url":".","display":"standalone","background_color":"%230F1210","theme_color":"%230F1210"}'>
+<link rel="manifest" href="./manifest.json">
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}</script>
 <script>(function(){try{var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-accent',localStorage.getItem('accent')||'green');var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',t==='dark'?'#0F1210':'#F4F3EE');}catch(e){}})();</script>
 <style>
   :root{
@@ -352,15 +353,22 @@ async function afterLogin(){
   try{if(localStorage.getItem('ratesDate')!==todayDate())refreshRates(true);}catch(e){}
 }
 async function loadData(){
-  const r=await Promise.all([
-    sb.from('accounts').select('*').order('sort'),
-    sb.from('categories').select('*').order('sort'),
-    sb.from('transactions').select('*').order('occurred_at',{ascending:false}),
-    sb.from('settings').select('*').limit(1),
-    sb.from('tags').select('*').order('sort'),
-    sb.from('planned').select('*').order('next_date'),
-    sb.from('templates').select('*').order('sort'),
-  ]);
+  let r;
+  try{
+    r=await Promise.all([
+      sb.from('accounts').select('*').order('sort'),
+      sb.from('categories').select('*').order('sort'),
+      sb.from('transactions').select('*').order('occurred_at',{ascending:false}),
+      sb.from('settings').select('*').limit(1),
+      sb.from('tags').select('*').order('sort'),
+      sb.from('planned').select('*').order('next_date'),
+      sb.from('templates').select('*').order('sort'),
+    ]);
+  }catch(e){
+    if(D.accounts.length||D.categories.length){toast("Немає з'єднання — показано останні збережені дані",true);renderApp();}
+    else renderDbError("Немає з'єднання з інтернетом. Перевір мережу і спробуй ще раз.");
+    return;
+  }
   const err=r.find(x=>x.error);
   if(err)return renderDbError(err.error.message);
   let [acc,cat,tx,st,tg,pl,tpl]=r.map(x=>x.data||[]);
