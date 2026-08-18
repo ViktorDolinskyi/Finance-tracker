@@ -450,10 +450,18 @@ async function delTag(id){if(!confirm('Видалити мітку?'))return;awa
 async function saveSetting(patch){const{error}=await sb.from('settings').upsert({user_id:user.id,...patch},{onConflict:'user_id'});if(error){toast(error.message,true);return;}D.settings={...D.settings,...patch};syncCache();renderApp();}
 async function refreshRates(silent){
   const rb=document.getElementById('ratesBtn');if(rb&&!silent){rb.disabled=true;rb.textContent='Оновлюю…';}
+  let arr=null;
+  for(let attempt=0;attempt<2 && !arr;attempt++){
+    try{
+      const res=await fetch('https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json');
+      if(!res.ok)throw new Error('http');
+      arr=await res.json();
+    }catch(e){
+      if(attempt===0)await new Promise(r=>setTimeout(r,800));
+    }
+  }
   try{
-    const res=await fetch('https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json');
-    if(!res.ok)throw new Error('http');
-    const arr=await res.json();
+    if(!arr)throw new Error('no response');
     const usd=arr.find(x=>x.cc==='USD'),eur=arr.find(x=>x.cc==='EUR');
     if(!usd||!eur)throw new Error('no data');
     try{localStorage.setItem('ratesDate',todayDate());localStorage.setItem('ratesAt',new Date().toISOString());}catch(e){}
