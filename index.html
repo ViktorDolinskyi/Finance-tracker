@@ -13,7 +13,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Фінанси">
 <link rel="manifest" href="./manifest.json">
-<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}</script>
 <script>(function(){try{var t=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-accent',localStorage.getItem('accent')||'green');var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',t==='dark'?'#0F1210':'#F4F3EE');}catch(e){}})();</script>
 <style>
   :root{
@@ -337,6 +336,15 @@ const holdings=cur=>D.accounts.filter(a=>a.currency===cur).reduce((s,a)=>s+balan
 function tile(c,cls){const col=c&&c.color?c.color:'#8A8F9E';const lu=c&&c.lucide;const em=c?c.icon:'•';return lu?`<span class="ic ${cls||''}" data-icon="${lu}" data-emoji="${esc(em)}" style="--c:${col}"></span>`:`<span class="ic ${cls||''}" style="--c:${col}">${esc(em||'•')}</span>`;}
 function accTile(a,cls){return `<span class="ic acc ${cls||''}">${esc(a&&a.icon||'💳')}</span>`;}
 
+initSW();
+function initSW(){
+  if(!('serviceWorker' in navigator))return;
+  const hadController=!!navigator.serviceWorker.controller;
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(hadController)toast("З'явилась нова версія застосунку — онови сторінку, щоб її отримати");
+  });
+}
 init();
 async function init(){
   const cfg=getCfg();
