@@ -790,10 +790,11 @@ function renderAcctSheet(){
   const s=acctSheet;
   const html=`<div class="overlay" id="aov"><div class="sheet"><div class="sheet-grip"></div>
     <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="acClose" style="width:34px;height:34px"><span data-icon="X"></span></button></div>
+    ${s.id?`<div class="sumcell mb"><div class="t">Поточний баланс</div><div class="v">${fmt(balanceOf(s.id),s.currency)}</div></div>`:''}
     <div class="two mb"><div style="flex:0 0 70px"><label class="fld">Іконка</label><input id="acIcon" class="ico-in" style="width:100%" value="${esc(s.icon)}"></div><div><label class="fld">Назва</label><input id="acName" value="${esc(s.name)}" placeholder="Напр. Олеся / MONO"></div></div>
     ${iconGrid(s.icon,'acIcons')}
     <div class="two mb"><div><label class="fld">Тип</label><select id="acType">${ATYPES.map(t=>`<option value="${t[0]}" ${t[0]===s.type?'selected':''}>${t[1]}</option>`).join('')}</select></div><div><label class="fld">Валюта</label><select id="acCur">${CURS.map(c=>`<option value="${c}" ${c===s.currency?'selected':''}>${c}</option>`).join('')}</select></div></div>
-    <div class="mb"><label class="fld">${s.type==='debt'?'Поточний баланс (＋ винні мені / − я винен)':'Початковий баланс'}</label><input id="acInit" type="number" inputmode="decimal" value="${esc(s.initial)}"></div>
+    <div class="mb"><label class="fld">${s.type==='debt'?'Баланс при створенні (＋ винні мені / − я винен)':'Початковий баланс'}</label><input id="acInit" type="number" inputmode="decimal" value="${esc(s.initial)}"></div>
     ${s.type==='credit'?`<div class="mb"><label class="fld">Кредитний ліміт</label><input id="acLimit" type="number" inputmode="decimal" value="${esc(s.credit_limit)}"></div>
     <div class="two mb"><div><label class="fld">Ставка %/рік</label><input id="acRate" type="number" inputmode="decimal" value="${esc(s.interest_rate)}" placeholder="напр. 35"></div><div><label class="fld">Мін. платіж %</label><input id="acMin" type="number" inputmode="decimal" value="${esc(s.min_payment)}" placeholder="напр. 5"></div></div>
     <div class="two mb"><div><label class="fld">День виписки</label><input id="acStmt" type="number" inputmode="numeric" min="1" max="31" value="${esc(s.stmt_day)}" placeholder="1–31"></div><div><label class="fld">День платежу</label><input id="acDueD" type="number" inputmode="numeric" min="1" max="31" value="${esc(s.due_day)}" placeholder="1–31"></div></div>`:''}
