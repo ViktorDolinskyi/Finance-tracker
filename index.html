@@ -597,7 +597,7 @@ function viewHome(){
   <div class="hero"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="lbl">Чистий капітал</div>
     ${usedCurs.length>1?`<div class="nwcur">${usedCurs.map(c=>`<button class="${c===netWorthCur?'on':''}" data-nwcur="${c}">${curSign(c)}</button>`).join('')}</div>`:''}</div>
     <div class="bal">${fmt0(fromUAH(netWorthUAH(),netWorthCur),netWorthCur)}</div>
-    ${fhold.length?`<div class="usd">у т.ч. ${fhold.join(' · ')} · курс ${fmt0(usdRate())}/$ · ${fmt0(eurRate())}/€</div>`:''}
+    ${fhold.length?`<div class="usd">у т.ч. ${fhold.join(' · ')} · курс ${usdRate().toFixed(2).replace('.',',')}/$ · ${eurRate().toFixed(2).replace('.',',')}/€</div>`:''}
     <div class="row">
       <div class="pill"><div class="t"><span data-icon="ArrowDownLeft"></span>Дохід / міс</div><div class="v pos">${fmt0(inc)}</div></div>
       <div class="pill"><div class="t"><span data-icon="ArrowUpRight"></span>Витрати / міс</div><div class="v neg">${fmt0(exp)}</div></div>
