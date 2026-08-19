@@ -112,6 +112,16 @@
   input,select{font-family:var(--body);font-size:14px;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:11px 13px;outline:none;width:100%}
   select optgroup{font-family:var(--display);font-weight:700;font-style:normal;color:var(--muted)}
   select option{color:var(--ink);font-weight:500}
+  .acctpick{position:relative}
+  .acctpick-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;font-family:var(--body);font-size:14px;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:11px 13px;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .acctpick-btn svg{width:16px;height:16px;color:var(--muted);flex:none}
+  .acctpick-list{display:none;position:fixed;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--lift);overflow-y:auto;z-index:80;padding:6px}
+  .acctpick-grp{font-family:var(--display);font-weight:700;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;padding:10px 10px 4px}
+  .acctpick-opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;border-radius:11px;padding:7px 8px;cursor:pointer;font-family:var(--body);font-size:13.5px;color:var(--ink)}
+  .acctpick-opt:hover{background:var(--surface2)}
+  .acctpick-opt.sel{background:var(--accent-soft);color:var(--accent);font-weight:600}
+  .acctpick-opt .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .acctpick-opt .bal{font-family:var(--mono);font-feature-settings:"tnum" 1;font-size:12px;color:var(--muted);flex:none}
   input::placeholder{color:var(--muted);opacity:.7}
   input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
   .btn{font-family:var(--display);font-weight:600;font-size:14.5px;border:none;border-radius:14px;padding:12px 18px;cursor:pointer;background:var(--accent);color:#fff;letter-spacing:-.01em}
@@ -351,6 +361,16 @@ function bindMoneyInputs(scope){(scope||document).querySelectorAll('.money-in').
     inp.setSelectionRange(newPos,newPos);
   });
 });}
+function closeAllAcctPicks(){document.querySelectorAll('.acctpick-list').forEach(l=>l.style.display='none');}
+function openAcctPickAt(btn,list){
+  const r=btn.getBoundingClientRect();
+  list.style.left=r.left+'px';
+  list.style.top=(r.bottom+6)+'px';
+  list.style.width=r.width+'px';
+  list.style.maxHeight=Math.max(120,Math.min(320,window.innerHeight-r.bottom-16))+'px';
+  list.style.display='block';
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.acctpick'))closeAllAcctPicks();});
 
 const accMap=()=>Object.fromEntries(D.accounts.map(a=>[a.id,a]));
 const catMap=()=>Object.fromEntries(D.categories.map(c=>[c.id,c]));
@@ -945,17 +965,22 @@ function renderSheet(){
   const usage={};D.txs.forEach(t=>{if(t.category_id)usage[t.category_id]=(usage[t.category_id]||0)+1;});
   const cats=D.categories.filter(c=>c.kind===(sheet.type==='income'?'income':'expense')).slice().sort((a,b)=>(usage[b.id]||0)-(usage[a.id]||0));
   const shownCats=sheet.catsExpanded?cats:cats.slice(0,16);
-  const opt=(a)=>AGROUPS.map(([ty,lbl])=>{
-    const list=D.accounts.filter(x=>agroup(x.type)===ty);
-    if(!list.length)return '';
-    return `<optgroup label="${esc(lbl)}">${list.map(x=>`<option value="${x.id}" ${x.id===a?'selected':''}>${esc(x.name)} (${x.currency}) · ${fmt(balanceOf(x.id),x.currency)}</option>`).join('')}</optgroup>`;
-  }).join('');
+  const opt=(btnId,listId,a)=>{
+    const sel=D.accounts.find(x=>x.id===a);
+    const label=sel?`${esc(sel.name)} (${sel.currency}) · ${fmt(balanceOf(sel.id),sel.currency)}`:'Обери рахунок';
+    const groups=AGROUPS.map(([ty,lbl])=>{
+      const list=D.accounts.filter(x=>agroup(x.type)===ty);
+      if(!list.length)return '';
+      return `<div class="acctpick-grp">${esc(lbl)}</div>${list.map(x=>`<button type="button" class="acctpick-opt ${x.id===a?'sel':''}" data-acc="${x.id}">${accTile(x)}<span class="nm">${esc(x.name)} (${x.currency})</span><span class="bal">${fmt(balanceOf(x.id),x.currency)}</span></button>`).join('')}`;
+    }).join('');
+    return `<div class="acctpick"><button type="button" class="acctpick-btn" id="${btnId}">${label}<span data-icon="ChevronDown"></span></button><div class="acctpick-list" id="${listId}">${groups}</div></div>`;
+  };
   const diffCur=sheet.type==='transfer'&&accCur(sheet.accountId)!==accCur(sheet.toAccountId);
   const createdRef=sheet.createdAt||new Date().toISOString();
   const dateDiffers=!sheet.planMode&&sheet.date&&dayOf(sheet.date)!==dayOf(createdRef);
   const accBlock=sheet.type==='transfer'
-    ? `<div class="two mb"><div><label class="fld">З рахунку</label><select id="shAcc">${opt(sheet.accountId)}</select></div><div><label class="fld">На рахунок</label><select id="shTo">${opt(sheet.toAccountId)}</select></div></div>${diffCur?`<div class="mb"><label class="fld">Сума зарахування (${accCur(sheet.toAccountId)})</label><input id="shToAmt" class="money-in" type="text" inputmode="decimal" placeholder="0" value="${esc(groupDigits(sheet.toAmount))}"></div>`:''}`
-    : `<div class="mb"><label class="fld">Рахунок</label><select id="shAcc">${opt(sheet.accountId)}</select></div>`;
+    ? `<div class="two mb"><div><label class="fld">З рахунку</label>${opt('shAccBtn','shAccList',sheet.accountId)}</div><div><label class="fld">На рахунок</label>${opt('shToBtn','shToList',sheet.toAccountId)}</div></div>${diffCur?`<div class="mb"><label class="fld">Сума зарахування (${accCur(sheet.toAccountId)})</label><input id="shToAmt" class="money-in" type="text" inputmode="decimal" placeholder="0" value="${esc(groupDigits(sheet.toAmount))}"></div>`:''}`
+    : `<div class="mb"><label class="fld">Рахунок</label>${opt('shAccBtn','shAccList',sheet.accountId)}</div>`;
   const dateBlock=sheet.planMode
     ? `<div class="two mb"><div><label class="fld">Наступна дата</label><input id="shDate" type="date" value="${esc(sheet.nextDate)}"></div><div><label class="fld">Повторення</label><select id="shRepeat">${REPEATS.map(r=>`<option value="${r[0]}" ${r[0]===sheet.repeat?'selected':''}>${r[1]}</option>`).join('')}</select></div></div>`
     : `<div class="mb"><label class="fld">Дата операції</label><input id="shDate" type="datetime-local" value="${esc(sheet.date)}"></div>${dateDiffers?`<div style="font-size:11.5px;color:var(--muted);margin:-7px 2px 13px">Дата створення: <span class="mono">${fmtTs(createdRef)}</span></div>`:''}`;
@@ -985,8 +1010,9 @@ function renderSheet(){
   ov.onclick=e=>{if(e.target===ov)attemptCloseSheet();};
   document.getElementById('shClose').onclick=attemptCloseSheet;
   ov.querySelectorAll('.seg button[data-t]').forEach(b=>b.onclick=()=>{snapshotSheet();sheet.type=b.dataset.t;if(sheet.type!=='transfer'){const cc=D.categories.filter(c=>c.kind===(sheet.type==='income'?'income':'expense'));if(!cc.find(c=>c.id===sheet.categoryId))sheet.categoryId=cc[0]?.id;}renderSheet();});
-  const acc=document.getElementById('shAcc');if(acc)acc.onchange=e=>{sheet.accountId=e.target.value;if(sheet.type==='transfer'){snapshotSheet();renderSheet();}};
-  const to=document.getElementById('shTo');if(to)to.onchange=e=>{sheet.toAccountId=e.target.value;snapshotSheet();renderSheet();};
+  ov.querySelectorAll('.acctpick-btn').forEach(b=>b.onclick=e=>{e.stopPropagation();const list=b.nextElementSibling;const isOpen=list.style.display==='block';closeAllAcctPicks();if(!isOpen)openAcctPickAt(b,list);});
+  const accList=document.getElementById('shAccList');if(accList)accList.querySelectorAll('.acctpick-opt').forEach(b=>b.onclick=()=>{snapshotSheet();sheet.accountId=b.dataset.acc;renderSheet();});
+  const toList=document.getElementById('shToList');if(toList)toList.querySelectorAll('.acctpick-opt').forEach(b=>b.onclick=()=>{snapshotSheet();sheet.toAccountId=b.dataset.acc;renderSheet();});
   ov.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{sheet.categoryId=b.dataset.cat;ov.querySelectorAll('[data-cat]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
   const cmore=document.getElementById('catMore');if(cmore)cmore.onclick=()=>{snapshotSheet();sheet.catsExpanded=!sheet.catsExpanded;renderSheet();};
   ov.querySelectorAll('#shTags .chip').forEach(b=>b.onclick=()=>{const id=b.dataset.tag;const i=sheet.tags.indexOf(id);if(i>=0)sheet.tags.splice(i,1);else sheet.tags.push(id);b.classList.toggle('on');});
