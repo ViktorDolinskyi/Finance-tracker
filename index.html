@@ -213,7 +213,7 @@
   .switch input:checked+.sl:before{transform:translateX(19px)}
   .swrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:5px 0}
   .swrow .lbl{font-size:14px;font-weight:500}
-  .swatches{display:flex;gap:14px;margin-top:14px}
+  .swatches{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px}
   .swatch{width:36px;height:36px;border-radius:50%;cursor:pointer;border:2px solid transparent;position:relative;flex:none;box-shadow:0 2px 6px -2px rgba(0,0,0,.3)}
   .swatch.on{border-color:var(--ink)}
   .swatch.on:after{content:"✓";position:absolute;inset:0;display:grid;place-content:center;color:#fff;font-size:15px;font-weight:700}
@@ -805,8 +805,10 @@ function renderCatSheet(){
     <div style="display:flex;justify-content:flex-end;margin:-6px -4px 2px"><button class="iconbtn" id="ccClose" style="width:44px;height:44px" aria-label="Закрити"><span data-icon="X"></span></button></div>
     <div class="mb"><label class="fld">Назва</label><input id="ccName" value="${esc(s.name)}" placeholder="Назва категорії"></div>
     <label class="fld">Іконка</label>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px">${tile({icon:s.icon,lucide:s.lucide,color:s.color})}<span style="font-size:12px;color:var(--muted)">Обери іконку нижче</span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px">${tile({icon:s.icon,lucide:s.lucide,color:s.color})}<span style="font-size:12px;color:var(--muted)">Обери іконку й колір нижче</span></div>
     ${lucideGrid(s.lucide,'ccIcons')}
+    <label class="fld" style="margin-top:12px">Колір</label>
+    <div class="swatches" id="ccColors">${PALETTE.map(col=>`<button class="swatch ${col===s.color?'on':''}" data-color="${col}" style="background:${col}"></button>`).join('')}</div>
     ${s.kind==='expense'?`<div class="swrow" style="margin-top:16px"><div class="lbl">Бюджет на місяць</div><label class="switch"><input type="checkbox" id="ccBudOn" ${s.budgetOn?'checked':''}><span class="sl"></span></label></div>
     ${s.budgetOn?`<div class="mb" style="margin-top:8px"><input id="ccBud" class="money-in" type="text" inputmode="decimal" placeholder="Сума бюджету, ₴" value="${esc(groupDigits(s.budget))}"></div>`:''}`:''}
     <button class="btn block" id="ccSave" style="margin-top:14px">${s.id?'Зберегти':'Додати категорію'}</button>
@@ -816,6 +818,7 @@ function renderCatSheet(){
   const ov=document.getElementById('cov');ov.onclick=e=>{if(e.target===ov)attemptCloseCat();};
   document.getElementById('ccClose').onclick=attemptCloseCat;
   ov.querySelectorAll('#ccIcons .icobtn').forEach(b=>b.onclick=()=>{snapshotCat();catSheet.icon='•';catSheet.lucide=b.dataset.luc;renderCatSheet();});
+  ov.querySelectorAll('#ccColors .swatch').forEach(b=>b.onclick=()=>{snapshotCat();catSheet.color=b.dataset.color;renderCatSheet();});
   const bo=document.getElementById('ccBudOn');if(bo)bo.onchange=()=>{snapshotCat();catSheet.budgetOn=bo.checked;renderCatSheet();};
   document.getElementById('ccSave').onclick=()=>{snapshotCat();saveCategory();};
   const dl=document.getElementById('ccDel');if(dl)dl.onclick=async()=>{const id=s.id;if(confirm('Видалити категорію?')){closeCatSheet();const{error}=await sb.from('categories').delete().eq('id',id);if(error){toast(error.message,true);return;}D.categories=D.categories.filter(c=>c.id!==id);syncCache();renderApp();}};
