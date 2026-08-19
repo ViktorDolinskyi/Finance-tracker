@@ -122,6 +122,10 @@
   .acctpick-opt.sel{background:var(--accent-soft);color:var(--accent);font-weight:600}
   .acctpick-opt .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .acctpick-opt .bal{font-family:var(--mono);font-feature-settings:"tnum" 1;font-size:12px;color:var(--muted);flex:none}
+  .acctpick-btn .acctpick-lbl{display:flex;align-items:baseline;gap:6px;overflow:hidden;flex:1;min-width:0}
+  .acctpick-btn .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .acctpick-btn .bal{font-family:var(--mono);font-feature-settings:"tnum" 1;font-size:12.5px;color:var(--muted);flex:none}
+  .bal.neg{color:var(--expense)}
   input::placeholder{color:var(--muted);opacity:.7}
   input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
   .btn{font-family:var(--display);font-weight:600;font-size:14.5px;border:none;border-radius:14px;padding:12px 18px;cursor:pointer;background:var(--accent);color:#fff;letter-spacing:-.01em}
@@ -967,11 +971,12 @@ function renderSheet(){
   const shownCats=sheet.catsExpanded?cats:cats.slice(0,16);
   const opt=(btnId,listId,a)=>{
     const sel=D.accounts.find(x=>x.id===a);
-    const label=sel?`${esc(sel.name)} (${sel.currency}) · ${fmt(balanceOf(sel.id),sel.currency)}`:'Обери рахунок';
+    const selBal=sel?balanceOf(sel.id):0;
+    const label=sel?`<span class="acctpick-lbl"><span class="nm">${esc(sel.name)} (${sel.currency})</span><span class="bal ${selBal<0?'neg':''}">${fmt(selBal,sel.currency)}</span></span>`:'<span class="acctpick-lbl"><span class="nm">Обери рахунок</span></span>';
     const groups=AGROUPS.map(([ty,lbl])=>{
       const list=D.accounts.filter(x=>agroup(x.type)===ty);
       if(!list.length)return '';
-      return `<div class="acctpick-grp">${esc(lbl)}</div>${list.map(x=>`<button type="button" class="acctpick-opt ${x.id===a?'sel':''}" data-acc="${x.id}">${accTile(x)}<span class="nm">${esc(x.name)} (${x.currency})</span><span class="bal">${fmt(balanceOf(x.id),x.currency)}</span></button>`).join('')}`;
+      return `<div class="acctpick-grp">${esc(lbl)}</div>${list.map(x=>{const b=balanceOf(x.id);return `<button type="button" class="acctpick-opt ${x.id===a?'sel':''}" data-acc="${x.id}">${accTile(x)}<span class="nm">${esc(x.name)} (${x.currency})</span><span class="bal ${b<0?'neg':''}">${fmt(b,x.currency)}</span></button>`;}).join('')}`;
     }).join('');
     return `<div class="acctpick"><button type="button" class="acctpick-btn" id="${btnId}">${label}<span data-icon="ChevronDown"></span></button><div class="acctpick-list" id="${listId}">${groups}</div></div>`;
   };
