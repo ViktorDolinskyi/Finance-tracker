@@ -167,6 +167,9 @@
   .catpick .nm{font-size:10px;color:var(--muted);line-height:1.15;text-align:center;font-weight:500}
   .catpick.sel{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 3px var(--accent-soft)}
   .two{display:flex;gap:10px}.two>div{flex:1}.mb{margin-bottom:13px}
+  .acctxfer{display:flex;flex-direction:column;gap:10px}
+  .acctxfer>div{flex:1;min-width:0}
+  @media (min-width:480px){.acctxfer{flex-direction:row}}
   .loading{text-align:center;padding:80px 20px;color:var(--muted);font-family:var(--display);font-weight:600}
   .panel{max-width:430px;margin:9vh auto 0}.panel .card{padding:26px}
   .panel h2{font-family:var(--display);font-size:23px;margin-bottom:7px;font-weight:700;letter-spacing:-.02em}
@@ -984,7 +987,7 @@ function renderSheet(){
   const createdRef=sheet.createdAt||new Date().toISOString();
   const dateDiffers=!sheet.planMode&&sheet.date&&dayOf(sheet.date)!==dayOf(createdRef);
   const accBlock=sheet.type==='transfer'
-    ? `<div class="two mb"><div><label class="fld">З рахунку</label>${opt('shAccBtn','shAccList',sheet.accountId)}</div><div><label class="fld">На рахунок</label>${opt('shToBtn','shToList',sheet.toAccountId)}</div></div>${diffCur?`<div class="mb"><label class="fld">Сума зарахування (${accCur(sheet.toAccountId)})</label><input id="shToAmt" class="money-in" type="text" inputmode="decimal" placeholder="0" value="${esc(groupDigits(sheet.toAmount))}"></div>`:''}`
+    ? `<div class="acctxfer mb"><div><label class="fld">З рахунку</label>${opt('shAccBtn','shAccList',sheet.accountId)}</div><div><label class="fld">На рахунок</label>${opt('shToBtn','shToList',sheet.toAccountId)}</div></div>${diffCur?`<div class="mb"><label class="fld">Сума зарахування (${accCur(sheet.toAccountId)})</label><input id="shToAmt" class="money-in" type="text" inputmode="decimal" placeholder="0" value="${esc(groupDigits(sheet.toAmount))}"></div>`:''}`
     : `<div class="mb"><label class="fld">Рахунок</label>${opt('shAccBtn','shAccList',sheet.accountId)}</div>`;
   const dateBlock=sheet.planMode
     ? `<div class="two mb"><div><label class="fld">Наступна дата</label><input id="shDate" type="date" value="${esc(sheet.nextDate)}"></div><div><label class="fld">Повторення</label><select id="shRepeat">${REPEATS.map(r=>`<option value="${r[0]}" ${r[0]===sheet.repeat?'selected':''}>${r[1]}</option>`).join('')}</select></div></div>`
