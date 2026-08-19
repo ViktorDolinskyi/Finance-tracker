@@ -134,6 +134,12 @@
   .sheet{background:var(--surface);width:100%;max-width:560px;border-radius:26px 26px 0 0;padding:16px 18px calc(22px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto;animation:up .26s cubic-bezier(.2,.8,.2,1);box-shadow:0 -10px 40px -10px rgba(0,0,0,.3)}
   @keyframes up{from{transform:translateY(24px);opacity:.5}to{transform:translateY(0);opacity:1}}
   .sheet-grip{width:42px;height:4px;border-radius:3px;background:var(--line);margin:2px auto 16px}
+  @media (min-width:768px){
+    .overlay{align-items:center;padding:24px}
+    .sheet{border-radius:20px;max-height:85vh;box-shadow:0 20px 60px -12px rgba(0,0,0,.35)}
+    .sheet-grip{display:none}
+    @keyframes up{from{transform:translateY(10px) scale(.98);opacity:.5}to{transform:translateY(0) scale(1);opacity:1}}
+  }
   .seg{display:flex;background:var(--surface2);border-radius:14px;padding:4px;gap:4px;margin-bottom:15px}
   .seg button{flex:1;border:none;background:none;cursor:pointer;padding:10px 0;border-radius:10px;font-family:var(--display);font-weight:600;font-size:13.5px;color:var(--muted)}
   .seg button.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
