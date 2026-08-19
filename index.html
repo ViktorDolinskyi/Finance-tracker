@@ -75,6 +75,7 @@
   .ic.sm{width:28px;height:28px;border-radius:9px;font-size:13px}
   .ic svg{width:58%;height:58%}
   .ic.acc{background:var(--surface2);color:var(--ink);box-shadow:none;border:1px solid var(--line)}
+  .ic.cat{background:var(--surface2);color:var(--c,#8A8F9E);box-shadow:none;border:1px solid var(--line)}
   .row-item{display:flex;align-items:center;gap:13px;padding:12px 0;border-top:1px solid var(--line-soft)}
   .row-item:first-child{border-top:none}
   .row-item[data-tx],.row-item[data-acct]{cursor:pointer;border-radius:12px;margin:0 -8px;padding:12px 8px}
@@ -357,7 +358,7 @@ function balanceAt(id,endISO){const a=accMap()[id];if(!a)return 0;return compute
 const netWorthAt=endISO=>D.accounts.filter(a=>a.in_networth!==false&&!a.archived).reduce((s,a)=>s+toUAH(balanceAt(a.id,endISO),a.currency),0);
 const fmtDate=ds=>{const d=new Date(ds+'T00:00:00');return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;};
 const holdings=cur=>D.accounts.filter(a=>a.currency===cur).reduce((s,a)=>s+balanceOf(a.id),0);
-function tile(c,cls){const col=c&&c.color?c.color:'#8A8F9E';const lu=c&&c.lucide;const em=c?c.icon:'•';return lu?`<span class="ic ${cls||''}" data-icon="${lu}" data-emoji="${esc(em)}" style="--c:${col}"></span>`:`<span class="ic ${cls||''}" style="--c:${col}">${esc(em||'•')}</span>`;}
+function tile(c,cls){const col=c&&c.color?c.color:'#8A8F9E';const lu=c&&c.lucide;const em=c?c.icon:'•';return lu?`<span class="ic cat ${cls||''}" data-icon="${lu}" data-emoji="${esc(em)}" style="--c:${col}"></span>`:`<span class="ic cat ${cls||''}" style="--c:${col}">${esc(em||'•')}</span>`;}
 function accTile(a,cls){return a&&a.lucide?`<span class="ic acc ${cls||''}" data-icon="${a.lucide}" data-emoji="${esc(a.icon||'💳')}"></span>`:`<span class="ic acc ${cls||''}">${esc(a&&a.icon||'💳')}</span>`;}
 
 initSW();
