@@ -161,7 +161,7 @@
   .seg button.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
   .seg button.on.exp{color:var(--expense)} .seg button.on.inc{color:var(--income)} .seg button.on.trf{color:var(--transfer)}
   .amount-in{font-family:var(--mono);font-feature-settings:"tnum" 1;font-size:36px;font-weight:700;text-align:center;padding:12px 8px;margin-bottom:15px;width:100%;border:1px solid var(--line);border-radius:16px;letter-spacing:-.03em;background:var(--surface2)}
-  .catgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 15px}
+  .catgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:6px 0 15px}
   .catpick{border:1px solid var(--line);background:var(--surface);border-radius:15px;padding:10px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--ink)}
   .catpick:active{transform:scale(.96)}
   .catpick .nm{font-size:10px;color:var(--muted);line-height:1.15;text-align:center;font-weight:500}
@@ -970,7 +970,7 @@ function renderSheet(){
   if(!sheet)return;
   const usage={};D.txs.forEach(t=>{if(t.category_id)usage[t.category_id]=(usage[t.category_id]||0)+1;});
   const cats=D.categories.filter(c=>c.kind===(sheet.type==='income'?'income':'expense')).slice().sort((a,b)=>(usage[b.id]||0)-(usage[a.id]||0));
-  const shownCats=sheet.catsExpanded?cats:cats.slice(0,16);
+  const shownCats=sheet.catsExpanded?cats:cats.slice(0,15);
   const opt=(btnId,listId,a)=>{
     const sel=D.accounts.find(x=>x.id===a);
     const selBal=sel?balanceOf(sel.id):0;
@@ -992,7 +992,7 @@ function renderSheet(){
     ? `<div class="two mb"><div><label class="fld">Наступна дата</label><input id="shDate" type="date" value="${esc(sheet.nextDate)}"></div><div><label class="fld">Повторення</label><select id="shRepeat">${REPEATS.map(r=>`<option value="${r[0]}" ${r[0]===sheet.repeat?'selected':''}>${r[1]}</option>`).join('')}</select></div></div>`
     : `<div class="mb"><label class="fld">Дата операції</label><input id="shDate" type="datetime-local" value="${esc(sheet.date)}"></div>${dateDiffers?`<div style="font-size:11.5px;color:var(--muted);margin:-7px 2px 13px">Дата створення: <span class="mono">${fmtTs(createdRef)}</span></div>`:''}`;
   const noteBlock=`<div class="mb"><label class="fld">Нотатка</label><input id="shNote" type="text" placeholder="напр. Lifecell, барбер…" value="${esc(sheet.note)}" maxlength="80"></div>`;
-  const catBlock=sheet.type!=='transfer'?`<label class="fld">Категорія</label><div class="catgrid">${shownCats.map(c=>`<button class="catpick ${c.id===sheet.categoryId?'sel':''}" data-cat="${c.id}">${tile(c)}<span class="nm">${esc(c.name)}</span></button>`).join('')}</div>${cats.length>16?`<button class="btn line block" id="catMore" style="margin:2px 0 14px;padding:9px">${sheet.catsExpanded?'Згорнути':'Показати ще ('+(cats.length-16)+')'}</button>`:''}`:'';
+  const catBlock=sheet.type!=='transfer'?`<label class="fld">Категорія</label><div class="catgrid">${shownCats.map(c=>`<button class="catpick ${c.id===sheet.categoryId?'sel':''}" data-cat="${c.id}">${tile(c)}<span class="nm">${esc(c.name)}</span></button>`).join('')}</div>${cats.length>15?`<button class="btn line block" id="catMore" style="margin:2px 0 14px;padding:9px">${sheet.catsExpanded?'Згорнути':'Показати ще ('+(cats.length-15)+')'}</button>`:''}`:'';
   const tagsBlock=D.tags.length?`<div class="mb"><label class="fld">Мітки</label><div class="chips" id="shTags">${D.tags.map(t=>`<button type="button" class="chip ${sheet.tags.includes(t.id)?'on':''}" data-tag="${t.id}"><span class="dot" style="background:${t.color}"></span>${esc(t.name)}</button>`).join('')}</div></div>`:'';
   const html=`<div class="overlay" id="ov"><div class="sheet">
     <div class="sheet-grip"></div>
